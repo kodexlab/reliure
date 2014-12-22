@@ -1,3 +1,5 @@
+#virtualenv
+ENV/
 # ignore editor temp files
 *~
 # ignore pyc files
