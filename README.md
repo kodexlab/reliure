@@ -20,6 +20,7 @@ Requires
 =======
 
 * py.test for testing
+* sphinx for documenation
 
 Contribute
 ==========
