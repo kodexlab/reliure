@@ -2,9 +2,6 @@
 """ :mod:`reliure.utils`
 ======================
 
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
 .. toctree::
 
     reliure.utils.log

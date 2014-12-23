@@ -1,9 +1,8 @@
 #-*- coding:utf-8 -*-
 """:mod:`reliure`
 =================
-
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
 """
+__version__ = '0.1.0'
+__all__ = ['Composable', 'Optionable']
 
+from pipeline import Composable, Optionable

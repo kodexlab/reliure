@@ -2,10 +2,6 @@
 """ :mod:`reliure.offline`
 ======================
 
-:copyright: (c) 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
-
 >>> documents = ["doc1", "doc2", "doc3", "doc4"]
 
 >>> from reliure.pipeline import Composable
@@ -47,6 +43,7 @@ instead of :func:`run`
 >>> #pprint(res)
 
 """
+
 import logging
 import multiprocessing as mp
 from time import time

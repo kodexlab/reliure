@@ -2,9 +2,6 @@
 """ :mod:`cello.types`
 ======================
 
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
 inheritance diagrams
 --------------------
 

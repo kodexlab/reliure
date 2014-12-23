@@ -7,7 +7,7 @@ Install
 
     $ pip install reliure
 
-Licence
+License
 =======
 
 Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
