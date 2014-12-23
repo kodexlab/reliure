@@ -1,13 +1,16 @@
 Reliure is a minimal and basic framework to manage pipeline of data processing
-component un Python.
+components in Python.
 
 
 Install
 ======
 
-TODO
+    $ pip install reliure
 
-$ pip install reliure
+Licence
+=======
+
+Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
 
 Doc
 ===
@@ -25,10 +28,23 @@ Requires
 Contribute
 ==========
 
-$ # Clone it
-$ cd reliure
-$ virtualenv ENV
-$ source ENV/bin/activate
-$ pip install -r requirements.txt
-$ pip install -e ./
-$ make testall
+    $ # Clone it
+    $ cd reliure
+    $ virtualenv ENV
+    $ source ENV/bin/activate
+    $ pip install -r requirements.txt
+    $ pip install -e ./
+
+To run tests:
+
+    $ pip install pytest
+    $ make testall
+
+To build the doc:
+
+    $ pip install sphinx_rtd_theme
+    $ make doc
+
+then open: docs/_build/html/index.html
+
+
