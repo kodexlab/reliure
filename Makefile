@@ -1,6 +1,6 @@
 # Makefile for reliure
 
-.PHONY: help tests clean doc testall
+.PHONY: help tests clean doc testall testdoc
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -15,7 +15,7 @@ help:
 clean-doc:
 	rm -rf docs/_build/ docs/_templates/
 
-doc:
+doc: testdoc
 	make -C ./docs html
 
 publish-doc:
