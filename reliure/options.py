@@ -2,11 +2,7 @@
 """ :mod:`reliure.option`
 =======================
 
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
 Option objects used in :class:`.Optionable`.
-
 
 inheritance diagrams
 --------------------

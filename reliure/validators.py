@@ -1,9 +1,6 @@
 #-*- coding:utf-8 -*-
 """ :mod:`reliure.validators`
 ===========================
-
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: LGPL
 """
 
 from reliure.utils.i18n import _

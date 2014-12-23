@@ -2,9 +2,6 @@
 """ :mod:`reliure.utils.log`
 =========================
 
-:copyright: (c) 2013 - 2014 by Yannick Chudy, Emmanuel Navarro.
-:license: ${LICENSE}
-
 Helper function to setup a basic logger for a reliure app
 """
 
