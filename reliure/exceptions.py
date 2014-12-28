@@ -80,13 +80,12 @@ class ValidationError(Exception):
     
     It may be either a single validation error or a list of validation error
     
-    >>> from cello.utils.i18n import _
+    >>> from reliure.utils.i18n import _
     >>> error = ValidationError(_("a message with a value : %(value)s"), {'value': 42})
     >>> for err in error: print err
     a message with a value : 42
 
     """
-
     def __init__(self, message, params=None):
         super(ValidationError, self).__init__(message, params)
         #

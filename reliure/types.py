@@ -1,11 +1,11 @@
 #-*- coding:utf-8 -*-
-""" :mod:`cello.types`
+""" :mod:`reliure.types`
 ======================
 
 inheritance diagrams
 --------------------
 
-.. inheritance-diagram:: cello.types
+.. inheritance-diagram:: reliure.types
 
 Class
 -----
@@ -13,8 +13,8 @@ Class
 """
 import datetime
 
-from cello.exceptions import SchemaError, ValidationError
-from cello.validators import TypeValidator, MinValueValidator, MaxValueValidator, ChoiceValidator
+from reliure.exceptions import SchemaError, ValidationError
+from reliure.validators import TypeValidator, MinValueValidator, MaxValueValidator, ChoiceValidator
 
 
 class GenericType(object):
