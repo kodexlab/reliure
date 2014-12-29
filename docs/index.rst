@@ -10,18 +10,19 @@ Reliure source code is available under the `LGPL Version 3`_ license, unless oth
 .. _LGPL Version 3: http://www.gnu.org/licenses/lgpl.txt
 
 
-Contents:
+Contents
 ^^^^^^^^
 
 .. toctree::
     :maxdepth: 2
 
     getstarted
+    engine
     api/api
 
 
 Get the source
-===============
+==============
 
 TODO
 
