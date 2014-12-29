@@ -2,147 +2,7 @@
 """ :mod:`reliure.engine`
 ========================
 
-Reliure processing system
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-code sample
-~~~~~~~~~~~
-
-Here is a simple exemple of Cellist usage. First you need to setup your Cellist:
-
->>> from reliure.engine import Engine
->>> cellist = Engine()
->>> cellist.requires('foo', 'bar', 'boo')
-
-one can make imaginary components:
-
->>> from reliure.pipeline import Pipeline, Optionable, Composable
->>> from reliure.types import Numeric
->>> class One(Optionable):
-...     def __init__(self):
-...         super(One, self).__init__(name="one")
-...         self.add_option("val", Numeric(default=1))
-... 
-...     @Optionable.check
-...     def __call__(self, input, val=None):
-...         return input + val
-... 
->>> one = One()
->>> two = Composable(name="two", func=lambda x: x*2)
->>> three = Composable(lambda x: x - 2) | Composable(lambda x: x/2.)
->>> three.name = "three"
-
-one can configure a block with this three components:
-
->>> foo_comps = [one, two, three]
->>> foo_options = {'defaults': 'two'}
->>> cellist.set('foo', *foo_comps, **foo_options)
-
-or
-
->>> cellist['bar'].setup(multiple=True)
->>> cellist['bar'].append(two, default=True)
->>> cellist['bar'].append(three, default=True)
-
-or
-
->>> cellist["boo"].set(two, three)
->>> cellist["boo"].setup(multiple=True)
->>> cellist["boo"].defaults = [comp.name for comp in (two, three)]
-
-One can have the list of all configurations:
-
->>> from pprint import pprint
->>> pprint(cellist.as_dict())
-{'args': ['input'],
- 'blocks': [{'args': None,
-             'components': [{'default': False,
-                             'name': 'one',
-                             'options': [{'name': 'val',
-                                          'otype': {'choices': None,
-                                                    'default': 1,
-                                                    'help': '',
-                                                    'max': None,
-                                                    'min': None,
-                                                    'multi': False,
-                                                    'type': 'Numeric',
-                                                    'uniq': False,
-                                                    'vtype': 'int'},
-                                          'type': 'value',
-                                          'value': 1}]},
-                            {'default': True,
-                             'name': 'two',
-                             'options': None},
-                            {'default': False,
-                             'name': 'three',
-                             'options': []}],
-             'multiple': False,
-             'name': 'foo',
-             'required': True,
-             'returns': 'foo'},
-            {'args': None,
-             'components': [{'default': True,
-                             'name': 'two',
-                             'options': None},
-                            {'default': True,
-                             'name': 'three',
-                             'options': []}],
-             'multiple': True,
-             'name': 'bar',
-             'required': True,
-             'returns': 'bar'},
-            {'args': None,
-             'components': [{'default': True,
-                             'name': 'two',
-                             'options': None},
-                            {'default': True,
-                             'name': 'three',
-                             'options': []}],
-             'multiple': True,
-             'name': 'boo',
-             'required': True,
-             'returns': 'boo'}]}
-
-
-
-And then you can configure and run it:
-
->>> request_options = {
-...     'foo':[
-...         {
-...             'name': 'one',
-...             'options': {
-...                 'val': 2
-...             }
-...        },     # input + 2
-...     ],
-...     'bar':[
-...         {'name': 'two'},
-...     ],     # input * 2
-...     'boo':[
-...         {'name': 'two'},
-...         {'name': 'three'},
-...     ], # (input - 2) / 2.
-... }
->>> cellist.configure(request_options)
->>> # test before running:
->>> cellist.validate()
-
-One can then run only one block:
-
->>> cellist['boo'].play(10)
-4.0
-
-or all blocks :
-
->>> res = cellist.play(4)
->>> res['foo']      # 4 + 2
-6
->>> res['bar']      # 6 * 2
-12
->>> res['boo']      # (12 - 2) / 2.0
-5.0
-
+see :ref:`reliure-engine` for documentation
 """
 
 import time
@@ -154,15 +14,6 @@ from collections import OrderedDict
 
 from reliure.exceptions import ReliureError
 from reliure.pipeline import Pipeline, Optionable, Composable
-
-#XXX move it in reliure/utils__init__
-def define_logger(init):
-    from functools import wraps
-    @wraps(init)
-    def wrapinit(self, *args, **kwargs):
-        self._logger = logging.getLogger("%s.%s" % (__name__, self.__class__.__name__))
-        init(self, *args, **kwargs)
-    return wrapinit 
 
 
 class BasicPlayMeta(object):
@@ -388,22 +239,25 @@ class Block(object):
     """ A block is a processing step realised by one component.
 
     A component is a callable object that has a *name* attribute, often it is
-    also a :class:`.Optionable` object or a pipeline beeing a :class:`.Composable`.
+    also a :class:`reliure.Optionable` object or a pipeline beeing a
+    :class:`reliure.Composable`.
 
-    Block object provides methods to discover and parse components options (if any).
+    Block object provides methods to discover and parse components options (if
+    any).
     
-    .. Warning:: You should not have to use a :class:`Block` directly but always
-        throught a :class:`Engine`.
+    .. Warning:: You should not have to use a :class:`.Block` directly but
+        always throught a :class:`.Engine`.
     """
 
     #TODO: ajout validation de type sur input/output
-    @define_logger
     def __init__(self, name):
-        """ Intialise a block. This should be done only from the :class:`.Engine`.
+        """ Intialise a block. This should be done only from the
+        :class:`.Engine`.
 
         :param name: name of the Block
         :type name: str
         """
+        self._logger = logging.getLogger("%s.%s" % (__name__, self.__class__.__name__))
         # declare attributs
         self._name = None 
         self._selected = []
@@ -754,8 +608,12 @@ class Engine(object):
     
     DEFAULT_IN_NAME = 'input'   # default input name for first component
     
-    @define_logger
     def __init__(self, *names):
+        """ Create the engine
+        
+        :param names: names of the engine blocks
+        """
+        self._logger = logging.getLogger("%s.%s" % (__name__, self.__class__.__name__))
         self._blocks = OrderedDict()
         self._logger.info("\n\n\t\t\t ** ============= Init engine ============= ** \n")
         if len(names):

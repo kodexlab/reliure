@@ -2,7 +2,7 @@
 """ :mod:`reliure.option`
 =======================
 
-Option objects used in :class:`.Optionable`.
+Option objects used in :class:`reliure.Optionable`.
 
 inheritance diagrams
 --------------------
