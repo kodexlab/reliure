@@ -31,7 +31,7 @@ def argument_from_option(parser, component, opt_name, prefix=""):
       --num NUM   An exemple of option
     >>> parser.parse_args(["--num", "2"])
     Namespace(num=2)
-    >>> parser.parse_args(["--num", "20"])
+    >>> parser.parse_args(["--num", "20"])          # doctest: +SKIP
     Traceback (most recent call last):
     ...
     ValidationError: [u'Ensure this value ("20") is less than or equal to 12.']

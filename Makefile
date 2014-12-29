@@ -27,7 +27,7 @@ test:
 	py.test -v ./tests --cov reliure --cov-report html
 
 testlib: 
-	py.test -v ./reliure
+	py.test -v ./reliure --doctest-module 
 
 testdoc:
 	py.test -v ./docs --doctest-glob='*.rst'

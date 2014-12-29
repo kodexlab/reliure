@@ -7,6 +7,7 @@
     reliure.utils.log
     reliure.utils.i18n
     reliure.utils.cli
+    reliure.utils.web
 
 """
 
