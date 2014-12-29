@@ -24,9 +24,54 @@ from reliure.engine import Engine
 class ReliureFlaskView(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
 
-    This is a Flask Blueprint.
-    """
+    This is a Flask Blueprint (see http://flask.pocoo.org/docs/blueprints/)
 
+    Here is a simple usage exemple:
+
+    >>> from reliure.engine import Engine
+    >>> from reliure import Composable
+    >>> engine = Engine()
+    >>> engine.requires("process")
+    >>> engine.process.setup(in_name="in", out_name="out")
+    >>> # setup the block's component
+    >>> engine.process.append(Composable(lambda x: x**2))
+    >>> 
+    >>> ## create the API blue print
+    >>> from reliure.utils.web import ReliureFlaskView
+    >>> from reliure.types import Numeric
+    >>> api = ReliureFlaskView(engine)
+    >>> # configure input/output
+    >>> api.set_input_type(Numeric())
+    >>> api.add_output("out")
+    >>> 
+    >>> # here you get your blueprint
+    >>> # you can register it to your app with
+    >>> app.register_blueprint(api, url_prefix="/api")    # doctest: +SKIP
+
+    Then you will have two routes:
+    
+    - /api/options: it will provide a json that desctibe your api (ie your engine)
+    - /api/play: used to run the engine itself
+    
+    To use the "play" entry point you can do :
+    
+    >>> request = {
+    ...     "in": 5,       # this is the name of my input
+    ...     "options": {}   # this this the api/engine configuration
+    ... }
+    >>> res = requests.get(
+    ...     SERVER_URL+"/api/play",
+    ...     data=json.dumps(request),
+    ...     headers={"content-type": "application/json"}
+    ... )                                                       # doctest: +SKIP
+    >>> data = res.json()                                       # doctest: +SKIP
+    {
+        meta: ...
+        results: {
+            "out": 25
+        }
+    }
+    """
     def __init__(self, engine):
         """ Build the Blueprint view over a :class:`.Engine`.
         
