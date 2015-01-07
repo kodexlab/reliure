@@ -22,8 +22,8 @@ class Composable(object):
     
     Composable is abstract, you need to implemented the :meth:`__call__` method
     
-    >>> e1 = Composable(lambda element: element**2)
-    >>> e2 = Composable(lambda element: element + 10)
+    >>> e1 = Composable(lambda element: element**2, name="e1")
+    >>> e2 = Composable(lambda element: element + 10, name="e2")
     
     Then :class:`Composable` can be pipelined this way :
 
@@ -34,6 +34,13 @@ class Composable(object):
     >>> # which is equivalent to :
     >>> e2(e1(2))
     14
+    >>> # not that by defaut the pipeline agregate the components name
+    >>> chain.name
+    'e1|e2'
+    >>> # however you can override it
+    >>> chain.name = "chain"
+    >>> chain.name
+    'chain'
 
     It also possible to 'map' the composables
     >>> cmap = e1 & e2
@@ -493,7 +500,7 @@ class Pipeline(OptionableSequence):
     def __init__(self, *composables):
         super(Pipeline, self).__init__(*composables)
         # create the "meta" name of the optionable pipeline, and init optionable
-        name = "|".join(item.name for item in self.opt_items)
+        name = "|".join(item.name for item in self.items)
         self.name = name
 
     @OptionableSequence.check
@@ -546,12 +553,12 @@ class MapReduce(MapSeq):
             def wrap(array, *args, **kwargs):
                 return reduce(array)
             self.reduce = wrap
-    
+
     @OptionableSequence.check
     def __call__(self, *args, **kwargs):
         array = self.map(*args, **kwargs)
         return self.reduce( array, *args, **kwargs )
-    
+
     def reduce(self, array, *args,  **kwargs):
         return NotImplementedError
 
