@@ -52,30 +52,11 @@ class ReliurePlayError(Exception):
         return "%s(%s)" % (self.__class__.__name__, str(self))
 
 
-class SchemaError(Exception):
-    """ Error
-    
-    #TODO: précissé le docstr, c'est quoi quand on a cette erreur exactement ?
-    """
+class ReliureTypeError(ReliureError):
+    """Error in a reliure Type"""
     pass
 
-
-class FieldValidationError(Exception):
-    """ Error in a field validation """
-    def __init__(self, field, value, errors):
-        super(FieldValidationError, self).__init__(field)
-        self.field = field
-        self.value = value
-        self.errors = errors
-
-    def __repr__(self):
-        return "<FieldValidationError '%s', '%s'>" % (self.field, self.value)
-        
-    def __str__(self):
-        return "FieldValidationError '%s' : %s \n  %s " % (self.field, self.value, 
-                            "\n".join([ "\t*%s" % err for err in self.errors]))
-    
-class ValidationError(Exception):
+class ValidationError(ReliureTypeError):
     """An error while validating data of a given type.
     
     It may be either a single validation error or a list of validation error
@@ -113,3 +94,4 @@ class ValidationError(Exception):
 
     def __repr__(self):
         return 'ValidationError(%s)' % self
+

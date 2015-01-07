@@ -1,10 +1,10 @@
 #-*- coding:utf-8 -*-
 import unittest
 
-from cello.exceptions import CelloError
-from cello.types import Numeric
-from cello.pipeline import Composable, Optionable
-from cello.engine import Block, Engine
+from reliure import Composable, Optionable
+from reliure.exceptions import ReliureError
+from reliure.types import Numeric
+from reliure.engine import Block, Engine
 
 # We create some simple components used to test Block and Engine
 
@@ -271,7 +271,7 @@ class TestEngine(unittest.TestCase):
     def test_empty_engine(self):
         engine = Engine()
         # empty should not validate
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.validate()
         # should not be possible to require some blocks...
         with self.assertRaises(ValueError):
@@ -289,7 +289,7 @@ class TestEngine(unittest.TestCase):
         self.assertTrue("op3" in engine)
         self.assertFalse("op4" in engine)
         # should not be possible to require a block that do not exist
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.requires("op4")
         # should be possible to set the component for each block
         engine.op1.set(self.mult_opt)
@@ -302,7 +302,7 @@ class TestEngine(unittest.TestCase):
             engine.set("op4", self.mult_opt)
         
         # should not validate if there is no component for all blocks
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.validate()
 
         #should be posisble to 'append' a possible component to the block
@@ -486,7 +486,7 @@ class TestEngine(unittest.TestCase):
         engine.op3.set(self.mult_opt)
         engine.op3.setup(in_name="out1", out_name="out3")
 
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.validate()
         
         engine.op2.setup(in_name="in1", out_name="out2")
@@ -494,7 +494,7 @@ class TestEngine(unittest.TestCase):
 
         engine.op2.setup(required=False)
         engine.op3.setup(in_name="out2")
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.validate()
 
     def test_engine_named_inout_multiin(self):
@@ -528,7 +528,7 @@ class TestEngine(unittest.TestCase):
         engine.op3.set(MinusTwoInputs())
         engine.op3.setup(in_name=["out1", "out2"], out_name="out3")
 
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             engine.validate()
 
     def test_engine_multi_entry_point(self):
@@ -549,11 +549,11 @@ class TestEngine(unittest.TestCase):
         self.assertEquals(res["middle"], 50)
 
         # should need input 'in'
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             res = engine.play(middle=10)
 
         # should not be possible to give to many inputs
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             res = engine.play(middle=10, in1=10)
 
         # should be possible to not play the op1 block
@@ -572,7 +572,7 @@ class TestEngine(unittest.TestCase):
         engine.op2.setup(in_name=["in2", "middle"], out_name="out")
 
         # an input is missing
-        with self.assertRaises(CelloError):
+        with self.assertRaises(ReliureError):
             res = engine.play(10)
     
         res = engine.play(in1=10, in2=2)

@@ -4,9 +4,9 @@ import cello
 
 from datetime import datetime
 
-from cello.exceptions import ValidationError
-from cello.types import GenericType, Numeric, Text, Boolean
-from cello.pipeline import Composable, Optionable, OptionableSequence, Pipeline
+from reliure.exceptions import ValidationError
+from reliure.types import GenericType, Numeric, Text, Boolean
+from reliure.pipeline import Composable, Optionable, OptionableSequence, Pipeline
 
 
 class TestComposable(unittest.TestCase):

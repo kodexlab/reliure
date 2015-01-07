@@ -13,7 +13,7 @@ Class
 """
 import datetime
 
-from reliure.exceptions import SchemaError, ValidationError
+from reliure.exceptions import ReliureTypeError, ValidationError
 from reliure.validators import TypeValidator, MinValueValidator, MaxValueValidator, ChoiceValidator
 
 
@@ -47,16 +47,16 @@ class GenericType(object):
             if self.multi is None:
                 self.multi = True
             elif not self.multi:
-                raise SchemaError("If you have attributs you can't have multi=False")
+                raise ReliureTypeError("If you have attributs you can't have multi=False")
             if self.uniq is None:
                 self.uniq = True
             elif not self.uniq:
-                raise SchemaError("If you have attributs you can't have uniq=False")
+                raise ReliureTypeError("If you have attributs you can't have uniq=False")
         elif self.uniq:
             if self.multi is None:
                 self.multi = True
             elif not self.multi:
-                raise SchemaError("If you have uniq=True you can't have multi=False")
+                raise ReliureTypeError("If you have uniq=True you can't have multi=False")
         elif self.multi:
             if self.uniq is None:
                 self.uniq = False
@@ -159,7 +159,7 @@ class Numeric(GenericType):
         """
         super(Numeric, self).__init__(**kwargs)
         if vtype not in Numeric._types_:
-            raise SchemaError('Wrong type for Numeric %s' % Numeric._types_ )
+            raise ReliureTypeError('Wrong type for Numeric %s' % Numeric._types_ )
         self.vtype = vtype
         self.validators.append(TypeValidator(vtype))
         self.min = min
@@ -196,7 +196,7 @@ class Text(GenericType):
         if encoding is not None:
             self.default_encoding = encoding
         if vtype not in Text._types_:
-            raise SchemaError('Wrong type for Text %s' % Numeric._types_ )
+            raise ReliureTypeError('Wrong type for Text %s' % Numeric._types_ )
         self.vtype = vtype
         self.validators.append(TypeValidator(vtype))
         self._init_validation()
