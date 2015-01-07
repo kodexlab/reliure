@@ -3,8 +3,8 @@ import unittest
 import cello
 
 from datetime import datetime
-from cello.exceptions import SchemaError, ValidationError
-from cello.types import GenericType, Numeric, Text, Boolean, Datetime
+from reliure.exceptions import ReliureTypeError, ValidationError
+from reliure.types import GenericType, Numeric, Text, Boolean, Datetime
 
 class TestFieldTypes(unittest.TestCase):
     def setUp(self):
@@ -19,18 +19,18 @@ class TestFieldTypes(unittest.TestCase):
         self.assertEqual(f.parse("45"), "45")
 
         # test invalid arguments
-        with self.assertRaises(SchemaError):
+        with self.assertRaises(ReliureTypeError):
             f = GenericType(uniq=False, attrs={"score":Numeric()})
-        with self.assertRaises(SchemaError):
+        with self.assertRaises(ReliureTypeError):
             f = GenericType(multi=False, attrs={"score":Numeric()})
-        with self.assertRaises(SchemaError):
+        with self.assertRaises(ReliureTypeError):
             f = GenericType(uniq=True, multi=False)
 
     def test_numeric(self):
         # Numeric Field (int or float)
         f = Numeric(vtype=float)
         self.assertNotEqual(repr(f), "")
-        self.assertRaises(SchemaError, lambda: Numeric(vtype=any) )
+        self.assertRaises(ReliureTypeError, lambda: Numeric(vtype=any) )
         self.assertEqual(f.validate(2.), 2.)  # ok
         self.assertEqual(f.validate(-2.2), -2.2)  # ok
         self.assertEqual(f.validate(-5e0), -5.)  # ok
@@ -84,7 +84,7 @@ class TestFieldTypes(unittest.TestCase):
 
     def test_text(self):
         # setting wrong types 
-        self.assertRaises(SchemaError, lambda: Text(vtype=any))
+        self.assertRaises(ReliureTypeError, lambda: Text(vtype=any))
         
         # check unicode
         f_unicode = Text(vtype=unicode)
