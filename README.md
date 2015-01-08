@@ -37,12 +37,13 @@ Contribute
 
 To run tests:
 
-    $ pip install pytest
+    $ pip install -I pytest
     $ make testall
 
 To build the doc:
 
-    $ pip install sphinx_rtd_theme
+    $ pip install -I sphinx
+    $ pip install -I sphinx_rtd_theme
     $ make doc
 
 then open: docs/_build/html/index.html
