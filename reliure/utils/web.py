@@ -7,6 +7,7 @@ helpers to build HTTP/Json Api from reliure engines
 
 import sys
 import json
+import requests
 
 from collections import OrderedDict
 
@@ -234,3 +235,39 @@ class ReliureFlaskView(Blueprint):
         return jsonify(outputs)
 
 
+
+class RemoteEngineApi(Blueprint):
+    def __init__(self, url):
+        """ Function doc
+        :param url: engine api url
+        """
+        super(RemoteEngineApi, self).__init__(repr(self), __name__)
+
+        self.url = url
+        self.add_url_rule('/options', 'options', self.options)
+        self.add_url_rule('/play', 'play', self.play,  methods=["POST", "GET"])
+        
+    def options(self):
+        """ Function doc
+        :param : 
+        """
+        resp = requests.get('%s/options'% self.url)
+        data = json.loads(resp.content)
+        return jsonify(data)
+        
+    def play(self):
+        """ Function doc
+        :param : 
+        """
+        if request.headers['Content-Type'].startswith('application/json'):
+            # data in JSON
+            data = request.json
+            resp = requests.post('%s/play'% self.url, json=data)
+            data = json.loads(resp.content)
+            return jsonify(data)
+        return 404 # XXX
+                
+
+        
+        
+        
