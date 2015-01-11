@@ -15,7 +15,7 @@ help:
 clean-doc:
 	rm -rf docs/_build/ docs/_templates/
 
-doc: testdoc
+doc: testlib testdoc
 	make -C ./docs html
 
 publish-doc:

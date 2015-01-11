@@ -85,7 +85,8 @@ def get_app_logger_color(appname, app_log_level=logging.INFO, log_level=logging.
     stderr_handler = logging.StreamHandler()
     stderr_handler.setLevel(log_level)
     # create formatter and add it to the handlers
-    name = "reliure" + "_"*(max(0, len(appname)-5))
+    name = "reliure"
+    name += "_"*(max(0, len(appname)-len(name)))
     formatter = ColorFormatter('$BG-BLUE$WHITE%s$RESET:%%(asctime)s:$COLOR%%(levelname)s$RESET:$BOLD%%(name)s$RESET: %%(message)s' % name)
     stderr_handler.setFormatter(formatter)
     # get the logers it self

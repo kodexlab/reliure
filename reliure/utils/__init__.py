@@ -108,14 +108,41 @@ def deprecated(new_fct_name, logger=None):
         return newFunc
     return aux_deprecated
 
-def engine_shema(engine, out_names=None):
-    """ Build a graphviz schema 
+def engine_schema(engine, out_names=None):
+    """ Build a graphviz schema of a reliure :class:`.Engine`.
     
-    :param engine:
+    It depends on `pygraphviz <http://pygraphviz.github.io/>`_.
+
+    :param engine: The reliure engine to graph
     :type engine: :class:`.Engine`
+    :param out_names: list of block output to consider as engine output (all by default)
+
+    >>> from reliure.engine import Engine
+    >>> egn = Engine("preproc", "proc1", "proc2")
+    >>> egn.preproc.setup(in_name="input", out_name="data")
+    >>> egn.proc1.setup(in_name="data", out_name="gold_data")
+    >>> egn.proc2.setup(in_name="input", out_name="silver_data")
+    >>> # you can create 
+    >>> schema = engine_schema(egn)
+    >>> schema.draw('docs/img/engine_schema.png', prog='dot')
+
+    it create the following image :
+
+    .. image:: /../_static/engine_schema.png
+
+    You can spécify which block output will be consider as engine output:
+
+    >>> schema = engine_schema(egn, ["gold_data", "silver_data"])
+    >>> schema.draw('docs/img/engine_schema_simple.png', prog='dot')
+
+    .. image:: /../_static/engine_schema_simple.png
+
+    Note that it is also possible to draw a pdf;
+
+    >>> schema.draw('docs/img/engine_schema.pdf', prog='dot')
     """
     import pygraphviz as pgv
-    engine.validate()
+    #engine.validate()
     dg = pgv.AGraph(strict=False, directed=True)
     input_node_name = "in"
     output_node_name = "out"
