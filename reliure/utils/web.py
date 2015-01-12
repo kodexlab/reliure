@@ -264,7 +264,7 @@ class ReliureFlaskView(Blueprint):
         # bind entry points
         self.add_url_rule('/engine/%s' % path, path, engine.options,  methods=["GET"])
         self.add_url_rule('/engine/%s/options' % path,  '%s_options' %path, engine.options,  methods=["GET"])
-        self.add_url_rule('/engine/%s/play' % path, '%s_play' %path, engine.play,  methods=["POST"])
+        self.add_url_rule('/engine/%s/play' % path, '%s_play' %path, engine.play,  methods=["POST", "GET"])
 
 
     def call(self, endpoint, *args, **kwargs):
