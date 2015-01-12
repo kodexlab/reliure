@@ -87,7 +87,9 @@ class ReliureFlaskView(Blueprint):
         self._outputs = OrderedDict()
         
         # bind entry points
+        self.add_url_rule('/', 'options', self.options)
         self.add_url_rule('/options', 'options', self.options)
+        
         self.add_url_rule('/play', 'play', self.play,  methods=["POST", "GET"])
 
     def set_input_type(self, type_or_parse):
@@ -244,14 +246,14 @@ class RemoteEngineApi(Blueprint):
         super(RemoteEngineApi, self).__init__(repr(self), __name__)
 
         self.url = url
-        self.add_url_rule('/options', 'options', self.options)
+        self.add_url_rule('/options', 'options', lambda : self.http_get("options"))
         self.add_url_rule('/play', 'play', self.play,  methods=["POST", "GET"])
         
-    def options(self):
+    def http_get(self, path):
         """ Function doc
         :param : 
         """
-        resp = requests.get('%s/options'% self.url)
+        resp = requests.get('%s/%s'% ( self.url, path) )
         data = json.loads(resp.content)
         return jsonify(data)
         
