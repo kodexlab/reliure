@@ -230,7 +230,7 @@ class ReliureFlaskView(Blueprint):
         }
     }
     """
-    def __init__(self, **kwargs):
+    def __init__(self, expose_route=True, **kwargs):
         """ Build the Blueprint view over a :class:`.Engine`.
     
         :param engine: the reliure engine to serve through an json API
@@ -238,9 +238,16 @@ class ReliureFlaskView(Blueprint):
         """
         super(ReliureFlaskView, self).__init__(repr(self), __name__, **kwargs)
         self.funcs = {}
-        
+        self.expose_route = expose_route
+
+    
+    def __repr__(self):
+        return self.name
+
+    
     def register(self, app, options, first_registration=False):
-        self.add_url_rule('/', 'routes', lambda : self.routes(app) ,  methods=["GET"])
+        if self.expose_route:
+            self.add_url_rule('/', 'routes', lambda : self.routes(app) ,  methods=["GET"])
         super(ReliureFlaskView, self).register(app, options, first_registration=first_registration)
         
     #def add_url_rule(self, "/complete/<string:text>", 'complete', self.complete,  methods=["GET"])
@@ -272,46 +279,89 @@ class ReliureFlaskView(Blueprint):
         
 
 class RemoteApi(Blueprint):
-    def __init__(self, url):
+    def __init__(self, url ):
         """ Function doc
         :param url: engine api url
         """
-        super(RemoteApi, self).__init__(repr(self), __name__)
+        print "RemoteApi @ %s" % url
+        resp = requests.get(url)
+        api = json.loads(resp.content)
+        
+        super(RemoteApi, self).__init__(api['api'], __name__)
         self.url = url
+        self.name = api['api']
 
-        api = self.http_get("")
-        name = api['name']
-
+        # XXXX very moche
+    
         for route in api['routes']:
             endpoint = route['name'].split('.')[-1]
             methods = route['methods']
-            s =  route['path'].split('/')
-            path = "/".join(s[1:])
-            if 'engine' in s and 'options' in s:
-                self.add_url_rule(path, endpoint, lambda : self.http_get("options"))
-            if 'engine' in s and 'play' in s:
-                self.add_url_rule(path, endpoint, self.play,  methods=methods)
+            s =  route['path'].split('/')[1:]
+            
+            print ">>>>>>" , route['path'], s
+            def get( *args, **kwargs):
+                print "http_get", endpoint
+                return self.http_get("/%s" % endpoint, *args, **kwargs)
+            
+            if 'engine' in s:
+                if not 'play' in s and not 'options' in s :
+                    path = "/%s" % "/".join(s)
+                    http_path = "/%s" % "/".join(s[1:])
+                    print "RemoteApi init engine", path, endpoint
+                    self.add_url_rule( path,  endpoint, lambda : self.http_get(http_path))
+                    self.add_url_rule( "%s/options"% path, "%s_options"% endpoint, lambda : self.http_get(http_path))
+                    self.add_url_rule( "%s/play"% path, "%s_play"% endpoint, lambda: self.play(http_path),  methods=['GET','POST'])
+            elif 'engine' in s:
+                pass
+            else :
+                print "RemoteApi init", path, endpoint
+                self.add_url_rule( route['path'],  endpoint, get)
 
+    
+    def __repr__(self):
+        return self.name
+
+
+    def register(self, app, options, first_registration=False):
+        #self.add_url_rule('/%s' %self.name , 'routes', lambda : self.routes(app) ,  methods=["GET"])
+        super(RemoteApi, self).register(app, options, first_registration=first_registration)
+        
+
+    def routes(self, app):
+        #for rule in app.url_map.iter_rules():
+        _routes = []
+        for rule in app.url_map.iter_rules() :
+            if str(rule).startswith(self.url_prefix):
+                _routes.append( { 'path':rule.rule,
+                                  'name':rule.endpoint,
+                                  'methods':list(rule.methods)
+                            })
+        return jsonify({ 'api': self.name, 'routes': _routes })
+
+
+
+    def call(self, endpoint, *args, **kwargs):
+        return self.http_get("/"+endpoint, *args, **kwargs)
+        
     def http_get(self, path, *args, **kwargs):
         """ Function doc
         :param : 
         """
-        _path = "/".join( [ path ] + list(args) )
-        qstr = "%s" % "&".join([ "%s=%s" %(k,v) for k,v in kwargs.iteritems() ])
-        if len(qstr): 
-            qstr = "?%s" % qstr
-        resp = requests.get('%s/%s%s'% ( self.url, _path, qstr ) )
+        _path = "/".join( [ p for p in ([ path ] + list(kwargs.values())) if p not in (None, "") ] )
+        url = '%s%s'% ( self.url, _path ) 
+        resp = requests.get(url)
         data = json.loads(resp.content)
         return jsonify(data)
         
-    def play(self):
+    def play(self, path):
         """ Function doc
         :param : 
         """
         if request.headers['Content-Type'].startswith('application/json'):
             # data in JSON
             data = request.json
-            resp = requests.post('%s/play'% self.url, json=data)
+            url = '%s%s/play'% (self.url,path)
+            resp = requests.post(url, json=data)
             data = json.loads(resp.content)
             return jsonify(data)
         return 404 # XXX
