@@ -73,7 +73,7 @@ class ReliureFlaskView(Blueprint):
         }
     }
     """
-    def __init__(self, engine):
+    def __init__(self, engine, prefix="/" ):
         """ Build the Blueprint view over a :class:`.Engine`.
         
         :param engine: the reliure engine to serve through an json API
@@ -85,12 +85,11 @@ class ReliureFlaskView(Blueprint):
         self._inputs = OrderedDict()
         # default outputs
         self._outputs = OrderedDict()
-        
+
         # bind entry points
-        self.add_url_rule('/', 'options', self.options)
-        self.add_url_rule('/options', 'options', self.options)
-        
-        self.add_url_rule('/play', 'play', self.play,  methods=["POST", "GET"])
+        self.add_url_rule('%s' % prefix, 'options', self.options)
+        self.add_url_rule('%s/options' % prefix, 'options', self.options)
+        self.add_url_rule('%s/play' % prefix, 'play', self.play,  methods=["POST", "GET"])
 
     def set_input_type(self, type_or_parse):
         """ Set an unique input type.
