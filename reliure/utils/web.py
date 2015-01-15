@@ -11,8 +11,7 @@ import requests
 
 from collections import OrderedDict
 
-from flask import Flask
-from flask import Blueprint
+from flask import Flask, Blueprint
 from flask import abort, request, jsonify
 
 from reliure.types import GenericType, Text
@@ -22,6 +21,37 @@ from reliure.engine import Engine
 # for error code see http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP#Erreur_du_client
 
 
+def add_engine(blueprint, engineview, path="/"):
+    # remove last / on path
+    
+    # bind entry points
+    blueprint.add_url_rule('/engine/%s' % path, path, engineview.options,  methods=["GET"])
+    blueprint.add_url_rule('/engine/%s/options' % path,  '%s_options' %path, engineview.options,  methods=["GET"])
+    blueprint.add_url_rule('/engine/%s/play' % path, '%s_play' %path, engineview.play,  methods=["POST", "GET"])
+
+def app_routes(app):
+    #for rule in app.url_map.iter_rules():
+    _routes = []
+    for rule in app.url_map.iter_rules() :
+        _routes.append( { 'path':rule.rule,
+                          'name':rule.endpoint,
+                          'methods':list(rule.methods)
+                    })
+    return jsonify({ 'routes': _routes })
+    
+def api_routes(app, api):
+    #for rule in app.url_map.iter_rules():
+    _routes = []
+    prefix = ""  if api.url_prefix is None else api.url_prefix
+    for rule in app.url_map.iter_rules() :
+        if str(rule).startswith(prefix):
+            _routes.append( { 'path':rule.rule,
+                              'name':rule.endpoint,
+                              'methods':list(rule.methods)
+                        })
+    return jsonify({ 'api': api.name,
+                     'url_root' : request.url_root,
+                     'routes': _routes })
 
 def parse_request(request):
     """ Parse request for :func:`play`
@@ -51,22 +81,22 @@ def parse_request(request):
     # note: all the inputs can realy be parsed only if the engine is setted
     return data, options
 
-def run_engine(apiengine, inputs_data, options):
+def run_engine(engineview, inputs_data, options):
     """ Run the engine according to some inputs data and options
     """
     ### configure the engine
     try:
-        apiengine.engine.configure(options)
+        engineview.engine.configure(options)
     except ValueError as err:
         #TODO beter manage input error: indicate what's wrong
         abort(406)  # Not Acceptable
 
     ### Check inputs
-    needed_inputs = apiengine.engine.needed_inputs()
+    needed_inputs = engineview.engine.needed_inputs()
     # check if all needed inputs are possible
-    if not all([inname in apiengine._inputs for inname in needed_inputs]):
+    if not all([inname in engineview._inputs for inname in needed_inputs]):
         #Note: this may be check staticly
-        missing = [inname for inname in needed_inputs if inname not in apiengine._inputs]
+        missing = [inname for inname in needed_inputs if inname not in engineview._inputs]
         raise ValueError("With this configuration the inputs %s are needed but not declared." % missing)
     # check if all inputs are given
     if not all([inname in inputs_data for inname in needed_inputs]):
@@ -77,14 +107,14 @@ def run_engine(apiengine, inputs_data, options):
     ### parse inputs (and validate)
     inputs = {}
     for inname in needed_inputs:
-        input_val = apiengine._inputs[inname].parse(inputs_data[inname])
-        apiengine._inputs[inname].validate(input_val)
+        input_val = engineview._inputs[inname].parse(inputs_data[inname])
+        engineview._inputs[inname].validate(input_val)
         inputs[inname] = input_val
     #
     ### run the engine
     error = False # by default ok
     try:
-        raw_res = apiengine.engine.play(**inputs)
+        raw_res = engineview.engine.play(**inputs)
     except ReliurePlayError as err:
         # this is the Reliure error that we can handle
         error = True
@@ -97,9 +127,9 @@ def run_engine(apiengine, inputs_data, options):
     if not error:
         # prepare the outputs
         for out_name, raw_out in raw_res.iteritems():
-            if out_name not in apiengine._outputs:
+            if out_name not in engineview._outputs:
                 continue
-            serializer = apiengine._outputs[out_name]
+            serializer = engineview._outputs[out_name]
             # serialise output
             if serializer is not None:
                 results[out_name] = serializer(raw_res[out_name])
@@ -109,11 +139,10 @@ def run_engine(apiengine, inputs_data, options):
     # add the results
     outputs["results"] = results
     ### serialise play metadata
-    outputs['meta'] = apiengine.engine.meta.as_dict()
+    outputs['meta'] = engineview.engine.meta.as_dict()
     #note: meta contains the error (if any)
     return outputs
-
-
+    
 
 class EngineView(object):
     def __init__(self, engine):
@@ -158,7 +187,6 @@ class EngineView(object):
             raise ValueError("the given 'serializer' is invalid")
         self._outputs[out_name] = serializer
 
-    
     def options(self):
         """ Engine options discover HTTP entry point
         """
@@ -178,8 +206,9 @@ class EngineView(object):
         #warning: 'date' are the raw data from the client, not the de-serialised ones
         outputs = run_engine(self, data, options)
         return jsonify(outputs)
+        
 
-class ReliureFlaskView(Blueprint):
+class ReliureBlue(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
 
     This is a Flask Blueprint (see http://flask.pocoo.org/docs/blueprints/)
@@ -203,6 +232,7 @@ class ReliureFlaskView(Blueprint):
     >>> api.add_output("out")
     >>> 
     >>> # here you get your blueprint
+        for name, serializer in outputs.iteritems():
     >>> # you can register it to your app with
     >>> app.register_blueprint(api, url_prefix="/api")    # doctest: +SKIP
 
@@ -230,56 +260,30 @@ class ReliureFlaskView(Blueprint):
         }
     }
     """
-    def __init__(self, expose_route=True, **kwargs):
+    def __init__(self, name, expose_route=True, **kwargs):
         """ Build the Blueprint view over a :class:`.Engine`.
     
         :param engine: the reliure engine to serve through an json API
         :type engine: :class:`.Engine`.
         """
-        super(ReliureFlaskView, self).__init__(repr(self), __name__, **kwargs)
-        self.funcs = {}
+        super(ReliureBlue, self).__init__(name, __name__, **kwargs)
         self.expose_route = expose_route
+        self.name = name
 
-    
     def __repr__(self):
         return self.name
 
+    def add_engine(self, view, path="/"):
+        add_engine(self, view, path=path)
     
     def register(self, app, options, first_registration=False):
         if self.expose_route:
-            self.add_url_rule('/', 'routes', lambda : self.routes(app) ,  methods=["GET"])
-        super(ReliureFlaskView, self).register(app, options, first_registration=first_registration)
-        
-    #def add_url_rule(self, "/complete/<string:text>", 'complete', self.complete,  methods=["GET"])
-    def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        self.funcs[endpoint] = view_func
-        super(ReliureFlaskView, self).add_url_rule( rule, endpoint, view_func , **options)
+            self.add_url_rule('/', 'routes', lambda : api_routes(app, self) ,  methods=["GET"])
+        super(ReliureBlue, self).register(app, options, first_registration=first_registration)
 
-    def routes(self, app):
-        #for rule in app.url_map.iter_rules():
-        _routes = []
-        for rule in app.url_map.iter_rules() :
-            if str(rule).startswith(self.url_prefix):
-                _routes.append( { 'path':rule.rule,
-                                  'name':rule.endpoint,
-                                  'methods':list(rule.methods)
-                            })
-        return jsonify({ 'api': self.name, 'routes': _routes })
-
-
-    def add_engine(self, path, engine):
-        # bind entry points
-        self.add_url_rule('/engine/%s' % path, path, engine.options,  methods=["GET"])
-        self.add_url_rule('/engine/%s/options' % path,  '%s_options' %path, engine.options,  methods=["GET"])
-        self.add_url_rule('/engine/%s/play' % path, '%s_play' %path, engine.play,  methods=["POST", "GET"])
-
-
-    def call(self, endpoint, *args, **kwargs):
-        return self.funcs[endpoint](*args, **kwargs)
-        
 
 class RemoteApi(Blueprint):
-    def __init__(self, url ):
+    def __init__(self, url , **kwargs):
         """ Function doc
         :param url: engine api url
         """
@@ -287,82 +291,76 @@ class RemoteApi(Blueprint):
         resp = requests.get(url)
         api = json.loads(resp.content)
         
-        super(RemoteApi, self).__init__(api['api'], __name__)
+        super(RemoteApi, self).__init__(api['api'], __name__, **kwargs)
         self.url = url
+        self.url_root = api['url_root']
         self.name = api['api']
-
-        # XXXX very moche
     
         for route in api['routes']:
             endpoint = route['name'].split('.')[-1]
             methods = route['methods']
-            s =  route['path'].split('/')[1:]
-            
-            print ">>>>>>" , route['path'], s
-            def get( *args, **kwargs):
-                print "http_get", endpoint
-                return self.http_get("/%s" % endpoint, *args, **kwargs)
-            
+            s =  route['path'].split('/')[2:]
+            path = "/%s" % "/".join(s)
+            print ">>>>>>" , route['path'],  endpoint, s
+
             if 'engine' in s:
                 if not 'play' in s and not 'options' in s :
-                    path = "/%s" % "/".join(s)
                     http_path = "/%s" % "/".join(s[1:])
                     print "RemoteApi init engine", path, endpoint
-                    self.add_url_rule( path,  endpoint, lambda : self.http_get(http_path))
-                    self.add_url_rule( "%s/options"% path, "%s_options"% endpoint, lambda : self.http_get(http_path))
-                    self.add_url_rule( "%s/play"% path, "%s_play"% endpoint, lambda: self.play(http_path),  methods=['GET','POST'])
+                    self.add_url_rule( route['path'],  endpoint, self.forward)
+                    self.add_url_rule( "%s/options"% route['path'], "%s_options"% endpoint,self.forward)
+                    self.add_url_rule( "%s/play"% route['path'], "%s_play"% endpoint, self.forward,  methods=['GET','POST'])
             elif 'engine' in s:
                 pass
             else :
-                print "RemoteApi init", path, endpoint
-                self.add_url_rule( route['path'],  endpoint, get)
+                self.add_url_rule( "%s" % route['path'], "%s" % endpoint,self.forward)
 
-    
+        @self.errorhandler(405)
+        def bad_request(error):
+            msg = "errors 405 : request method allowed GET, POST with 'Content-Type=application/json' ", 405
+            print msg
+            return msg
+            
     def __repr__(self):
         return self.name
 
+    # useless
+    def add_url_rule(self, path, endpoint, *args, **kwargs):
+        print "RULE", path , endpoint
+        super(RemoteApi, self).add_url_rule(path, endpoint, *args, **kwargs)
 
     def register(self, app, options, first_registration=False):
-        #self.add_url_rule('/%s' %self.name , 'routes', lambda : self.routes(app) ,  methods=["GET"])
+
+        #self.add_url_rule('/' , 'routes', lambda : app_routes(app) ,  methods=["GET"])
+
+        # override url_prefix if new is given to app.register_blueprint
+        # url_prefix is needed for url forwarding
+        if options:
+            self.url_prefix = options.get('url_prefix', self.url_prefix)
+
         super(RemoteApi, self).register(app, options, first_registration=first_registration)
         
-
-    def routes(self, app):
-        #for rule in app.url_map.iter_rules():
-        _routes = []
-        for rule in app.url_map.iter_rules() :
-            if str(rule).startswith(self.url_prefix):
-                _routes.append( { 'path':rule.rule,
-                                  'name':rule.endpoint,
-                                  'methods':list(rule.methods)
-                            })
-        return jsonify({ 'api': self.name, 'routes': _routes })
-
-
-
-    def call(self, endpoint, *args, **kwargs):
-        return self.http_get("/"+endpoint, *args, **kwargs)
-        
-    def http_get(self, path, *args, **kwargs):
-        """ Function doc
-        :param : 
+    def forward(self, **kwargs):
+        """ remote http call to api endpoint 
+        accept *ONLY* GET and POST requests avec un content-type=application/json
         """
-        _path = "/".join( [ p for p in ([ path ] + list(kwargs.values())) if p not in (None, "") ] )
-        url = '%s%s'% ( self.url, _path ) 
-        resp = requests.get(url)
-        data = json.loads(resp.content)
-        return jsonify(data)
+        # rewrite url path  
+        prefix = self.url_prefix
+        path= "" if request.path == "/" else request.path
+        path = path[len(prefix):]
+        url = '%s%s'% ( self.url_root[:-1], path )
         
-    def play(self, path):
-        """ Function doc
-        :param : 
-        """
-        if request.headers['Content-Type'].startswith('application/json'):
-            # data in JSON
-            data = request.json
-            url = '%s%s/play'% (self.url,path)
-            resp = requests.post(url, json=data)
+        if request.method == 'GET':
+            resp = requests.get(url, params=request.args)
             data = json.loads(resp.content)
             return jsonify(data)
-        return 404 # XXX
-
+            
+        if request.method == 'POST':
+            if request.headers['Content-Type'].startswith('application/json'):
+                # data in JSON
+                resp = requests.post(url, json=request.json)
+                data = json.loads(resp.content)
+                return jsonify(data)
+                
+        # method not allowed aborting
+        abort(405) # XXX
