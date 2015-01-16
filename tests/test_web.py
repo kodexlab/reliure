@@ -46,6 +46,32 @@ class TestReliureFlaskViewSimple(unittest.TestCase):
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
 
+    def test_routes(self):
+        resp = self.app.get('api/')
+        data = json.loads(resp.data)
+        assert data == {
+            u'api': u'api',
+            u'routes': [
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.egn_options',
+                    u'path': u'/api/egn'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.egn_play',
+                    u'path': u'/api/egn'
+                },
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.routes',
+                    u'path': u'/api/'
+                }
+            ],
+            u'url_root': u'http://localhost/'
+        }
+
+
     def test_options(self):
         resp = self.app.get('api/egn')
         data = json.loads(resp.data)
@@ -135,11 +161,6 @@ class TestReliureFlaskViewMultiInputs(unittest.TestCase):
         app.config['TESTING'] = True
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
-
-    def test_routes(self):
-        resp = self.app.get('api/')
-        data = json.loads(resp.data)
-        assert data
 
     def test_options(self):
         resp = self.app.get('api/my_egn')
