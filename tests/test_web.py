@@ -39,7 +39,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         egn_view.add_output("out")
 
         api = ReliureJsonAPI()
-        api.plug(egn_view, path="egn")
+        api.plug(egn_view, url_prefix="egn")
 
         app = Flask(__name__)
         app.config['TESTING'] = True

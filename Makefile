@@ -33,7 +33,7 @@ testdoc:
 	py.test -v ./docs --doctest-glob='*.rst'
 
 testall: 
-	py.test -v ./tests ./reliure --doctest-module --cov reliure --cov-report html
+	py.test -v ./tests ./reliure ./docs --doctest-module --doctest-glob='*.rst' --cov reliure --cov-report html
 
 testcov:
 	py.test --cov reliure --cov-report term-missing

@@ -14,6 +14,7 @@ from collections import OrderedDict
 from flask import Flask, Blueprint
 from flask import abort, request, jsonify
 
+from reliure import Composable
 from reliure.types import GenericType, Text
 from reliure.exceptions import ReliurePlayError
 from reliure.engine import Engine, Block
@@ -243,9 +244,15 @@ class ComponentView(EngineView):
     """ View over a simple component (:class:`.Composable` or simple function)
     """
     def __init__(self, component):
+        if not isinstance(component, Composable):
+            if callable(component):
+                component = Composable(component)
+            else:
+                raise ValueError("component '%s' is not Optionable nor Composable and even not callable" % component)
         blk_name = component.name
         self._blk = Block(component.name)
         self._blk.set(component)
+        
         super(ComponentView, self).__init__(self._blk, blk_name)
 
     def add_input(self, in_name, type_or_parse=None):
