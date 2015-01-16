@@ -34,12 +34,26 @@ def app_routes(app):
 
 
 class EngineView(object):
-    def __init__(self, engine):
+    """ View over an :class:`.Engine` or a :class:`.Block`
+    """
+    def __init__(self, engine, name=None):
         self.engine = engine
+        self.name = name
         # default input
         self._inputs = OrderedDict()
         # default outputs
         self._outputs = OrderedDict()
+
+    def set_input_type(self, type_or_parse):
+        """ Set an unique input type.
+
+        If you use this then you have only one input for the play.
+        """
+        self._inputs = OrderedDict()
+        default_inputs = self.engine.in_name
+        if len(default_inputs) > 1:
+            raise ValueError("Need more than one input, you sould use `add_inpout` for each of them")
+        self.add_input(default_inputs[0], type_or_parse)
 
     def inputs(*args, **kwargs):
         """ Set the inputs
@@ -49,10 +63,12 @@ class EngineView(object):
         for in_name, type_or_parse in kwargs.iteritems():
             self.add_output(in_name, type_or_parse)
 
-    def add_input(self, in_name, type_or_parse):
+    def add_input(self, in_name, type_or_parse=None):
         """ declare a possible input
         """
-        if not isinstance(type_or_parse, GenericType) and callable(type_or_parse):
+        if type_or_parse is None:
+            type_or_parse = GenericType()
+        elif not isinstance(type_or_parse, GenericType) and callable(type_or_parse):
             type_or_parse = GenericType(parse=type_or_parse)
         elif not isinstance(type_or_parse, GenericType):
             raise ValueError("the given 'type_or_parse' is invalid")
@@ -69,6 +85,8 @@ class EngineView(object):
     def add_output(self, out_name, type_or_serialize=None):
         """ declare an output
         """
+        if type_or_serialize is None:
+            type_or_serialize = GenericType()
         if not isinstance(type_or_serialize, GenericType) and callable(type_or_serialize):
             type_or_serialize = GenericType(serialize=type_or_serialize)
         elif not isinstance(type_or_serialize, GenericType):
@@ -93,7 +111,7 @@ class EngineView(object):
         else:
             # data in URL ?
             abort(415) # Unsupported Media Type
-            # TODO: manage data in url
+            # TODO: manage config/data in url
     #            args = request.args
     #            if args.get('_f') == 'semicolons':
     #                pairs = args.get('q').split(',')
@@ -103,8 +121,13 @@ class EngineView(object):
         # note: all the inputs can realy be parsed only if the engine is setted
         return data, options
 
-    def run_engine(self, inputs_data, options):
-        """ Run the engine according to some inputs data and options
+    def run(self, inputs_data, options):
+        """ Run the engine/block according to some inputs data and options
+        
+        It is called from :func:`play`
+        
+        :param inputs_data: dict of input data
+        :param options: engine/block configuration dict
         """
         ### configure the engine
         try:
@@ -181,7 +204,7 @@ class EngineView(object):
         """
         data, options = self.parse_request(request)
         #warning: 'date' are the raw data from the client, not the de-serialised ones
-        outputs = self.run_engine(data, options)
+        outputs = self.run(data, options)
         return jsonify(outputs)
 
 
@@ -237,27 +260,40 @@ class ReliureJsonAPI(Blueprint):
         }
     }
     """
-    def __init__(self, name, expose_route=True, url_prefix=None, **kwargs):
+    def __init__(self, name="api", url_prefix=None, **kwargs):
         """ Build the Blueprint view over a :class:`.Engine`.
     
-        :param engine: the reliure engine to serve through an json API
-        :type engine: :class:`.Engine`.
+        :param name: the name of this api (used as url prefix by default)
         """
+        assert isinstance(name, basestring)
         # set url_prefix from name if not setted
         if url_prefix is None:
             url_prefix = "/%s" % name
-        super(ReliureBlue, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
-        self.expose_route = expose_route
-        self.name = name 
+        super(ReliureJsonAPI, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
+        self.name = name
+        self.expose_route = True
+        #Note: the main get "/" route exposition is binded in register method
 
     def __repr__(self):
         return self.name
 
-    def _routes(self, app):
-        """ list of route for an API in a app
+    def plug(self, view, path=None):
+        """ Associate a :class:`EngineView` to this api
         """
+        if path is None:
+            if view.name is None:
+                raise ValueError("EngineView has no name and path is not specified")
+            path = view.name
+        # bind entry points
+        self.add_url_rule('/%s' % path, '%s_options' % path, view.options, methods=["GET"])
+        self.add_url_rule('/%s' % path, '%s_play' % path, view.play, methods=["POST"])
+
+    def _routes(self, app):
+        """ list of routes (you should have the app where this is register)
+        """
+        print "###########  route"
         _routes = []
-        prefix = ""  if self.url_prefix is None else self.url_prefix
+        prefix = self.url_prefix if self.url_prefix is not None else ""
         for rule in app.url_map.iter_rules():
             if str(rule).startswith(prefix):
                 _routes.append({
@@ -267,15 +303,11 @@ class ReliureJsonAPI(Blueprint):
                 })
         returns = {
             'api': self.name,
-            'url_root' : request.url_root,
+            'url_root': request.url_root,
             'routes': _routes
         }
+        print returns
         return jsonify(returns)
-
-    def plug(self, view, path=None):
-        # bind entry points
-        self.add_url_rule('/%s' % path, '%s_options' % path, view.options, methods=["GET"])
-        self.add_url_rule('/%s' % path, '%s_play' % path, view.play, methods=["POST"])
 
     def register(self, app, options, first_registration=False):
         # Note: the main api route '/' is added here because one know to have the
@@ -283,7 +315,7 @@ class ReliureJsonAPI(Blueprint):
         if self.expose_route:
             ## add the main api route
             self.add_url_rule('/', 'routes', lambda: self._routes(app), methods=["GET"])
-        super(ReliureBlue, self).register(app, options, first_registration=first_registration)
+        super(ReliureJsonAPI, self).register(app, options, first_registration=first_registration)
 
 
 class RemoteApi(Blueprint):

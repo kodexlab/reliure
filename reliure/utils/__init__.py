@@ -76,6 +76,7 @@ def urllib2_json_urlopen(request_url, request_data=None, logger=None):
     response.close()
     return results
 
+
 def urllib2_setup_proxy(proxy=None):
     """ Setup a proxy for urllib2
     """
@@ -107,6 +108,7 @@ def deprecated(new_fct_name, logger=None):
         newFunc.__dict__.update(func.__dict__)
         return newFunc
     return aux_deprecated
+
 
 def engine_schema(engine, out_names=None):
     """ Build a graphviz schema of a reliure :class:`.Engine`.
