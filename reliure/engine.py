@@ -322,6 +322,11 @@ class Block(object):
         """
         return self._components.keys()
 
+    def needed_inputs(self):
+        """ Return a list of (needed) inputs names
+        """
+        return self.in_name
+
     @property
     def defaults(self):
         """ component default component
@@ -425,7 +430,7 @@ class Block(object):
         :type defaults: list of str, or str
         """
         if in_name is not None:
-            self.in_name = in_name if type(in_name) ==list else [in_name]
+            self.in_name = in_name if isinstance(in_name, list) else [in_name]
         if out_name is not None:
             self.out_name = out_name
         if required is not None:
@@ -515,13 +520,79 @@ class Block(object):
         if isinstance(component, Optionable):
             component.set_options_values(options, parse=True, strict=True)
 
+    def configure(self, config):
+        """ Configure the block from an (horible) configuration dictionary (or
+        list) this data are coming from a json client request and has to be
+        parsed. It takes the default value if missing (for component selection
+        and options).
+
+        :param config: component to use and the associated options 
+        :type config: `dict` or `list`
+
+        `config` format ::
+
+            {
+                'name': name_of_the_comp_to_use,
+                'options': {
+                    name: value,
+                    name: va...
+                }
+            }
+
+        or for multiple selection ::
+
+            [
+                {
+                    'name': name_of_the_comp_to_use,
+                    'options': {
+                        name: value,
+                        name: va...
+                    }
+                },
+                {...}
+            ]
+
+        .. warning:: values of options in this dictionnary are strings
+
+        """
+        self._logger.info("configure block <%s>" % self.name)
+        # normalise input format
+        if isinstance(config, dict):
+            if len(config) == 0:
+                config = []
+            else:
+                config = [config]
+        # check errors
+        if self.hidden and len(config):
+            raise ValueError("Component '%s' is hidden you can't change it's configuration from here" % self.name)
+        if self.required and len(self.defaults) == 0 and len(config) == 0:
+            raise ValueError("Component '%s' is required but none given (and no defaults)" % self.name)
+        # comp is given
+        if not self.multiple and len(config) > 1:
+            raise ValueError("Block '%s' allows only one component to be selected" % self.name)
+        # check input dict
+        for req_comp in config:
+            if 'name' not in req_comp:
+                raise ValueError("No 'name' value in config for block '%s' " % self.name)
+            if req_comp['name'] not in self:
+                raise ValueError("Invalid component (%s) for block '%s' "
+                    % (req_comp['name'], self.name))
+
+        # remove selection and reset to default options
+        self.clear_selections()
+
+        # configure the block
+        # select and set options
+        for req_comp in config:
+            self.select(req_comp['name'], req_comp.get("options", {}))
+
     def validate(self):
         """ check that the block can be run
         """
         if self.required and len(self.selected()) == 0:
             raise ReliureError("No component selected for block '%s'" % self.name)
 
-    def play(self, *inputs): #XXX web: (*inputs, **named_inputs) in engine
+    def play(self, *inputs, **named_inputs):
         """ Run the selected components of the block. The selected components 
         are run with the already setted options.
 
@@ -534,9 +605,19 @@ class Block(object):
         # intialise run meta data
         start = time.time()
         self.meta = PlayMeta(self.name)
-        
+            ### manage inputs
+        if len(inputs) and len(named_inputs):
+            raise ValueError("Either `inputs` or `named_inputs` should be provided, not both !")
+        # default input name (so also the default last_output_name)
+        if len(named_inputs):
+            if self.in_name is None:
+                raise ValueError("named inputs given, but the block input's names are unknow")
+            if self.in_name != named_inputs.keys():
+                raise ValueError("Inputs names are not matching with block input's names")
+            inputs = [named_inputs[in_name] for in_name in self.in_name]
+
         _break_on_error = True
-        results = None
+        results = {}
         # run
         for comp_name in self.selected():
             # get the component
@@ -570,7 +651,7 @@ class Block(object):
                 # actually same arg if given several times 
                 # but may be transformed during the process
                 # then finally returned
-                results = comp(*inputs, **options)
+                results[self.out_name] = comp(*inputs, **options)
                 #TODO: add validation on inputs name !
 
                 # TODO implements different mode for multiple 
@@ -723,6 +804,7 @@ class Engine(object):
         .. warning:: values of options in this dictionnary are strings
 
         """
+        ##TODO use block configuration
         self._logger.info("\n\n\t\t\t ** ============= configure engine ============= ** \n")
         # normalise input format
         for block_name in config.iterkeys():
@@ -897,7 +979,7 @@ class Engine(object):
             inputs = [results[name] for name in in_names]
             # run the block
             try:
-                results[block.out_name] = block.play(*inputs)
+                results.update(block.play(*inputs))
                 # ^ note: le validate par rapport au type est fait dans le run du block
             finally:
                 # store metadata

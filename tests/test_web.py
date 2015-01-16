@@ -20,7 +20,7 @@ class OptProductEx(Optionable):
         return arg * factor
 
 
-class TestReliureFlaskViewSimple(unittest.TestCase):
+class TestReliureJsonAPISimple(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -70,7 +70,6 @@ class TestReliureFlaskViewSimple(unittest.TestCase):
             ],
             u'url_root': u'http://localhost/'
         }
-
 
     def test_options(self):
         resp = self.app.get('api/egn')
@@ -134,7 +133,7 @@ class TestReliureFlaskViewSimple(unittest.TestCase):
         assert results["out"] == 2*2*5
 
 
-class TestReliureFlaskViewMultiInputs(unittest.TestCase):
+class TestReliureJsonAPIMultiInputs(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -209,5 +208,62 @@ class TestReliureFlaskViewMultiInputs(unittest.TestCase):
         assert results["out"] == 2*12
 
         #TODO: test error when wrong input
+
+
+
+
+class TestReliureJsonAPIWithBlock(unittest.TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        self.engine = Engine("op1", "op2")
+        self.engine.op1.setup(in_name="in", out_name="middle")
+        self.engine.op2.setup(in_name="middle", out_name="out")
+
+        self.engine.op1.set(OptProductEx())
+
+        foisdouze = OptProductEx("foisdouze")
+        foisdouze.force_option_value("factor", 12)
+        foisquatre = OptProductEx("foisquatre")
+        foisquatre.force_option_value("factor", 4)
+        self.engine.op2.set(foisdouze, foisquatre)
+
+        op2_view = EngineView(self.engine.op2, name="op2")
+        op2_view.set_input_type(Numeric(vtype=int))
+        op2_view.add_output("out")
+
+        api = ReliureJsonAPI()
+        api.plug(op2_view)
+
+        app = Flask(__name__)
+        app.config['TESTING'] = True
+        app.register_blueprint(api, url_prefix="/api")
+        self.app = app.test_client()
+
+    def test_options(self):
+        resp = self.app.get('api/op2')
+        data = json.loads(resp.data)
+        # check we have the same than in engine
+        assert data["components"] == self.engine.op2.as_dict()["components"]
+        assert data["args"] == ["middle"]
+        assert data["returns"] == ["out"]
+
+    def test_play_simple(self):
+        # it should be possible to play the full engine
+        # prepare query
+        rdata = {'middle': 2}
+        rdata["options"] = {
+            'name': 'foisquatre',
+        }
+        json_data = json.dumps(rdata)
+        resp = self.app.post('api/op2', data=json_data, content_type='application/json')
+        # load the results
+        resp_data = json.loads(resp.data)
+        # check it
+        assert "results" in resp_data
+        results = resp_data["results"]
+        assert "out" in results
+        assert len(results) == 1 # in, middle, out
+        assert results["out"] == 2*4
 
 
