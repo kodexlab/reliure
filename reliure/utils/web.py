@@ -252,8 +252,10 @@ class ComponentView(EngineView):
         blk_name = component.name
         self._blk = Block(component.name)
         self._blk.set(component)
-        
         super(ComponentView, self).__init__(self._blk, blk_name)
+        # default output name
+        super(ComponentView, self).add_output(self._blk.out_name)
+        self._default_out_name = True
 
     def add_input(self, in_name, type_or_parse=None):
         self._blk.setup(in_name=in_name)
@@ -261,6 +263,9 @@ class ComponentView(EngineView):
         super(ComponentView, self).add_input(in_name, type_or_parse)
 
     def add_output(self, out_name, type_or_serialize=None):
+        if self._default_out_name:
+            self._outputs = OrderedDict()
+            self._default_out_name = False
         self._blk.setup(out_name=out_name)
         #XXX: attention il faut interdire les multi output
         super(ComponentView, self).add_output(out_name, type_or_serialize)
