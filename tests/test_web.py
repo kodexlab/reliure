@@ -299,6 +299,7 @@ class TestComponentView(unittest.TestCase):
         comp_view = ComponentView(OptProductEx())
         comp_view.add_input("number", Numeric())
         comp_view.add_output("value", Numeric())
+        comp_view.get("n/<number>")
 
         api = ReliureJsonAPI()
         api.plug(comp_view)
@@ -312,25 +313,30 @@ class TestComponentView(unittest.TestCase):
         resp = self.app.get('api/')
         data = json.loads(resp.data)
         assert data == {
-            'routes': [
+            u'routes': [
                 {
-                    'path': '/api/mult_opt',
-                    'name': 'api.mult_opt_options',
-                    'methods': ['HEAD', 'OPTIONS', 'GET']
+                    u'path': u'/api/mult_opt',
+                    u'name': u'api.mult_opt_options',
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
                 },
                 {
-                    'path': '/api/mult_opt',
-                    'name': 'api.mult_opt_play',
-                    'methods': ['POST', 'OPTIONS']
+                    u'path': u'/api/mult_opt',
+                    u'name': u'api.mult_opt_play',
+                    u'methods': [u'POST', u'OPTIONS']
                 },
                 {
-                    'path': '/api/',
-                    'name': 'api.routes',
-                    'methods': ['HEAD', 'OPTIONS', 'GET']
-                }
+                    u'path': u'/api/',
+                    u'name': u'api.routes',
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
+                },
+                {
+                    u'path': u'/api/mult_opt/n/<number>',
+                    u'name': u'api.mult_opt_short_play',
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
+                },
             ],
-            'url_root': u'http://localhost/',
-            'api': 'api'
+            u'url_root': u'http://localhost/',
+            u'api': u'api'
         }
 
     def test_options(self):
@@ -389,4 +395,13 @@ class TestComponentView(unittest.TestCase):
         assert "results" in resp_data
         results = resp_data["results"]
         assert results == {"value": 2*3}
+
+    def test_play_short(self):
+        resp = self.app.get('api/mult_opt/n/33', content_type='application/json')
+        # load the results
+        resp_data = json.loads(resp.data)
+        # check it
+        assert "results" in resp_data
+        results = resp_data["results"]
+        assert results == {"value": 33*5}
 

@@ -39,6 +39,7 @@ class EngineView(object):
     def __init__(self, engine, name=None):
         self.engine = engine
         self.name = name
+        self._short_route = None
         # default input
         self._inputs = OrderedDict()
         # default outputs
@@ -92,6 +93,9 @@ class EngineView(object):
         elif not isinstance(type_or_serialize, GenericType):
             raise ValueError("the given 'type_or_serialize' is invalid")
         self._outputs[out_name] = type_or_serialize
+
+    def get(self, route):
+        self._short_route = route
 
     def parse_request(self, request):
         """ Parse request for :func:`play`
@@ -207,6 +211,13 @@ class EngineView(object):
         outputs = self.run(data, options)
         return jsonify(outputs)
 
+    def short_play(self, **kwargs):
+        """ Main http entry point: run the engine
+        """
+        options = {}
+        outputs = self.run(kwargs, options)
+        return jsonify(outputs)
+
 
 class ComponentView(EngineView):
     """ View over a simple component (:class:`.Composable` or simple function)
@@ -307,6 +318,13 @@ class ReliureJsonAPI(Blueprint):
         # bind entry points
         self.add_url_rule('/%s' % path, '%s_options' % path, view.options, methods=["GET"])
         self.add_url_rule('/%s' % path, '%s_play' % path, view.play, methods=["POST"])
+        # manage short route
+        if view._short_route is not None:
+            self.add_url_rule(
+                '/%s/%s' % (path, view._short_route),
+                '%s_short_play' % path,
+                view.short_play, methods=["GET"]
+            )
 
     def _routes(self, app):
         """ list of routes (you should have the app where this is register)
