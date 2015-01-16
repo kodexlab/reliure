@@ -138,7 +138,6 @@ class EngineView(object):
 
         ### Check inputs
         needed_inputs = self.engine.needed_inputs()
-        print self.engine, needed_inputs, self.engine.in_name
         # check if all needed inputs are possible
         if not all(inname in self._inputs for inname in needed_inputs):
             #Note: this may be check staticly
@@ -220,9 +219,6 @@ class ComponentView(EngineView):
 
     def add_input(self, in_name, type_or_parse=None):
         self._blk.setup(in_name=in_name)
-        print in_name
-        print self._blk.in_name
-        
         #XXX: ca ne va pas si multiple input
         super(ComponentView, self).add_input(in_name, type_or_parse)
 
@@ -358,7 +354,7 @@ class RemoteApi(Blueprint):
         self.url = url
         self.url_root = api['url_root']
         self.name = api['api']
-    
+
         for route in api['routes']:
             endpoint = route['name'].split('.')[-1]
             methods = route['methods']

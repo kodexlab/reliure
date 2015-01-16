@@ -297,15 +297,8 @@ class TestComponentView(unittest.TestCase):
 
     def setUp(self):
         comp_view = ComponentView(OptProductEx())
-
-        foisdouze = OptProductEx("foisdouze")
-        foisdouze.force_option_value("factor", 12)
-        foisdouze_view = ComponentView(foisdouze)
-        foisdouze_view.add_input("number", Numeric())
-        foisdouze_view.add_output("value", Numeric())
-
-        #op2_view.set_input_type(Numeric(vtype=int))
-        #op2_view.add_output("out")
+        comp_view.add_input("number", Numeric())
+        comp_view.add_output("value", Numeric())
 
         api = ReliureJsonAPI()
         api.plug(comp_view)
@@ -345,18 +338,45 @@ class TestComponentView(unittest.TestCase):
         data = json.loads(resp.data)
         print data
         # check we have the same than in engine
-        assert False
-        assert "components" in data
-        assert data["args"] == ["number"]
-        assert data["returns"] == ["value"]
+        assert data == {
+            u'required': True,
+            u'multiple': False,
+            u'name': u'mult_opt',
+            u'args': [u'number'],
+            u'returns': [u'value'],
+            u'components': [
+                {
+                    u'default': True,
+                    u'name': u'mult_opt', 
+                    u'options': [
+                        {
+                            u'otype': {
+                                u'multi': False,
+                                u'vtype': u'int',
+                                u'help': u'multipliation factor',
+                                u'min': None,
+                                u'default': 5,
+                                u'max': None,
+                                u'choices': None,
+                                u'uniq': False,
+                                u'type': u'Numeric'
+                            },
+                            u'type': u'value',
+                            u'name': u'factor',
+                            u'value': 5
+                        }
+                    ]
+                }
+            ]
+        }
 
     def test_play_simple(self):
         # prepare query
         rdata = {
             'number': 3,
-            'config': {
+            'options': {
                 'name': 'mult_opt',
-                'option': {
+                'options': {
                     'factor': 2,
                 }
             }
@@ -368,7 +388,5 @@ class TestComponentView(unittest.TestCase):
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
-        assert "out" in results
-        assert len(results) == 1 # in, middle, out
-        assert results["out"] == 2*4
+        assert results == {"value": 2*3}
 
