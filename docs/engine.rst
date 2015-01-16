@@ -135,7 +135,7 @@ And then you can configure and run it:
 One can then run only one block:
 
 >>> egn['boo'].play(10)
-4.0
+{'boo': 4.0}
 
 or all blocks :
 

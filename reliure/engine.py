@@ -395,6 +395,7 @@ class Block(object):
         """
         self._components = OrderedDict()
         self.clear_selections()
+        self._logger.info("<block: %s> reset component list" % (self.name))
 
     def clear_selections(self):
         """ Reset the current selections and **reset option** values to default
@@ -406,7 +407,7 @@ class Block(object):
         self._selected = []
         for component in self._components.itervalues():
             if isinstance(component, Optionable):
-                self._logger.info("'%s' clear selection an options for '%s'" % (self.name, component.name))
+                self._logger.info("<block: %s> clear selection an options for '%s'" % (self.name, component.name))
                 component.clear_options_values()
 
     def setup(self, in_name=None, out_name=None, required=None, hidden=None,
@@ -414,7 +415,7 @@ class Block(object):
         """ Set the options of the block.
         Only the not None given options are set
 
-        .. note:: a block may have multiple inputs but have only one output (for now)
+        .. note:: a block may have multiple inputs but have only one output
 
         :param in_name: name(s) of the block input data
         :type in_name: str or list of str
@@ -448,7 +449,6 @@ class Block(object):
         
         :param components: components to append Optionables or Composables
         """
-        self._logger.info("'%s' set components: \n\t%s", self.name, "\n\t".join(("'%s':%s" % (e.name, e) for e in components)))
         self.reset()
         if len(components) == 1:
             self.append(components[0])
@@ -475,6 +475,7 @@ class Block(object):
                 self.defaults = self.defaults + [component.name]
             else:
                 self.defaults = component.name
+        self._logger.info("<block: %s> add component: %s:%s" % (self.name, component.name, component))
 
     def select(self, comp_name, options=None):
         """ Select the components that will by played (with given options).

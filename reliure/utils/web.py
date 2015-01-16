@@ -35,6 +35,26 @@ def app_routes(app):
 
 class EngineView(object):
     """ View over an :class:`.Engine` or a :class:`.Block`
+    
+    >>> engine = Engine("count_a", "count_b")
+    >>>
+    >>> engine.count_a.setup(in_name='in')
+    >>> engine.count_a.set(lambda chaine: chaine.count("a"))
+    >>>
+    >>> engine.count_b.setup(in_name='in')
+    >>> engine.count_b.set(lambda chaine: chaine.count("b"))
+    >>> 
+    >>> 
+    >>> # we can build a view on this engine
+    >>> egn_view = EngineView(engine, name="count")
+    >>> egn_view.add_output("count_a")  # note that by default block outputs are named by block's name
+    >>> egn_view.add_output("count_b")
+    >>> # one can specify a short url for this engine
+    >>> egn_view.get("/q/<in>")
+    >>>
+    >>> # this view can be added to a reliure API
+    >>> api = ReliureJsonAPI("api")
+    >>> api.plug(egn_view)
     """
     def __init__(self, engine, name=None):
         self.engine = engine
@@ -247,21 +267,22 @@ class ReliureJsonAPI(Blueprint):
     Here is a simple usage exemple:
 
     >>> from reliure.engine import Engine
-    >>> from reliure import Composable
-    >>> engine = Engine()
-    >>> engine.requires("process")
+    >>> engine = Engine("process")
     >>> engine.process.setup(in_name="in", out_name="out")
     >>> # setup the block's component
-    >>> engine.process.append(Composable(lambda x: x**2))
+    >>> engine.process.set(lambda x: x**2)
     >>> 
-    >>> ## create the API blue print
-    >>> from reliure.utils.web import ReliureFlaskView
+    >>> # configure a view for the engine
+    >>> egn_view = EngineView(engine)
+    >>> # configure view input/output
     >>> from reliure.types import Numeric
-    >>> api = ReliureFlaskView()
-    >>> # configure input/output
-    >>> api.set_input_type(Numeric())
-    >>> api.add_output("out")
+    >>> egn_view.set_input_type(Numeric())
+    >>> egn_view.add_output("out")
     >>> 
+    >>> ## create the API blueprint
+    >>> api = ReliureJsonAPI()
+    >>> api.plug(egn_view, url_prefix="egn")
+    >>>
     >>> # here you get your blueprint
         for name, serializer in outputs.iteritems():
     >>> # you can register it to your app with
@@ -269,23 +290,24 @@ class ReliureJsonAPI(Blueprint):
 
     Then you will have two routes:
     
-    - /api/options: it will provide a json that desctibe your api (ie your engine)
-    - /api/play: used to run the engine itself
-    
-    To use the "play" entry point you can do :
-    
+    - [GET] /api/: returns a json that desctibe your api routes
+    - [GET] /api/egn: returns a json that desctibe your engine
+    - [POST] /api/egn: run the engine itself
+
+    To use the "POST" entry point you can do :
+
     >>> request = {
     ...     "in": 5,       # this is the name of my input
     ...     "options": {}   # this this the api/engine configuration
     ... }
     >>> res = requests.get(
-    ...     SERVER_URL+"/api/play",
+    ...     SERVER_URL+"/api/egn",
     ...     data=json.dumps(request),
     ...     headers={"content-type": "application/json"}
     ... )                                                       # doctest: +SKIP
     >>> data = res.json()                                       # doctest: +SKIP
     {
-        meta: ...
+        meta: {...}
         results: {
             "out": 25
         }
@@ -308,21 +330,21 @@ class ReliureJsonAPI(Blueprint):
     def __repr__(self):
         return self.name
 
-    def plug(self, view, path=None):
+    def plug(self, view, url_prefix=None):
         """ Associate a :class:`EngineView` to this api
         """
-        if path is None:
+        if url_prefix is None:
             if view.name is None:
                 raise ValueError("EngineView has no name and path is not specified")
-            path = view.name
+            url_prefix = view.name
         # bind entry points
-        self.add_url_rule('/%s' % path, '%s_options' % path, view.options, methods=["GET"])
-        self.add_url_rule('/%s' % path, '%s_play' % path, view.play, methods=["POST"])
+        self.add_url_rule('/%s' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
+        self.add_url_rule('/%s' % url_prefix, '%s_play' % url_prefix, view.play, methods=["POST"])
         # manage short route
         if view._short_route is not None:
             self.add_url_rule(
-                '/%s/%s' % (path, view._short_route),
-                '%s_short_play' % path,
+                '/%s/%s' % (url_prefix, view._short_route),
+                '%s_short_play' % url_prefix,
                 view.short_play, methods=["GET"]
             )
 
