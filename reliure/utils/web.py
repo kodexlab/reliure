@@ -16,7 +16,7 @@ from flask import abort, request, jsonify
 
 from reliure.types import GenericType, Text
 from reliure.exceptions import ReliurePlayError
-from reliure.engine import Engine
+from reliure.engine import Engine, Block
 
 # for error code see http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP#Erreur_du_client
 
@@ -138,13 +138,14 @@ class EngineView(object):
 
         ### Check inputs
         needed_inputs = self.engine.needed_inputs()
+        print self.engine, needed_inputs, self.engine.in_name
         # check if all needed inputs are possible
-        if not all([inname in self._inputs for inname in needed_inputs]):
+        if not all(inname in self._inputs for inname in needed_inputs):
             #Note: this may be check staticly
             missing = [inname for inname in needed_inputs if inname not in self._inputs]
             raise ValueError("With this configuration the inputs %s are needed but not declared." % missing)
         # check if all inputs are given
-        if not all([inname in inputs_data for inname in needed_inputs]):
+        if not all(inname in inputs_data for inname in needed_inputs):
             # configuration error
             missing = [inname for inname in needed_inputs if inname not in inputs_data]
             raise ValueError("With this configuration the inputs %s are missing." % missing)
@@ -200,12 +201,35 @@ class EngineView(object):
         return jsonify(conf)
 
     def play(self):
-        """ Main http entry point: run the reliure engine
+        """ Main http entry point: run the engine
         """
         data, options = self.parse_request(request)
         #warning: 'date' are the raw data from the client, not the de-serialised ones
         outputs = self.run(data, options)
         return jsonify(outputs)
+
+
+class ComponentView(EngineView):
+    """ View over a simple component (:class:`.Composable` or simple function)
+    """
+    def __init__(self, component):
+        blk_name = component.name
+        self._blk = Block(component.name)
+        self._blk.set(component)
+        super(ComponentView, self).__init__(self._blk, blk_name)
+
+    def add_input(self, in_name, type_or_parse=None):
+        self._blk.setup(in_name=in_name)
+        print in_name
+        print self._blk.in_name
+        
+        #XXX: ca ne va pas si multiple input
+        super(ComponentView, self).add_input(in_name, type_or_parse)
+
+    def add_output(self, out_name, type_or_serialize=None):
+        self._blk.setup(out_name=out_name)
+        #XXX: attention il faut interdire les multi output
+        super(ComponentView, self).add_output(out_name, type_or_serialize)
 
 
 class ReliureJsonAPI(Blueprint):

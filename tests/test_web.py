@@ -9,7 +9,7 @@ from reliure.engine import Engine
 from reliure.types import Numeric
 from reliure.exceptions import ValidationError
 
-from reliure.utils.web import EngineView, ReliureJsonAPI
+from reliure.utils.web import ReliureJsonAPI, EngineView, ComponentView
 
 class OptProductEx(Optionable):
     def __init__(self, name="mult_opt"):
@@ -161,6 +161,31 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
 
+    def test_routes(self):
+        resp = self.app.get('api/')
+        data = json.loads(resp.data)
+        assert data == {
+            u'api': u'api',
+            u'routes': [
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.my_egn_options',
+                    u'path': u'/api/my_egn'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.my_egn_play',
+                    u'path': u'/api/my_egn'
+                },
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.routes',
+                    u'path': u'/api/'
+                }
+            ],
+            u'url_root': u'http://localhost/'
+        }
+
     def test_options(self):
         resp = self.app.get('api/my_egn')
         data = json.loads(resp.data)
@@ -266,4 +291,84 @@ class TestReliureJsonAPIWithBlock(unittest.TestCase):
         assert len(results) == 1 # in, middle, out
         assert results["out"] == 2*4
 
+
+class TestComponentView(unittest.TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        comp_view = ComponentView(OptProductEx())
+
+        foisdouze = OptProductEx("foisdouze")
+        foisdouze.force_option_value("factor", 12)
+        foisdouze_view = ComponentView(foisdouze)
+        foisdouze_view.add_input("number", Numeric())
+        foisdouze_view.add_output("value", Numeric())
+
+        #op2_view.set_input_type(Numeric(vtype=int))
+        #op2_view.add_output("out")
+
+        api = ReliureJsonAPI()
+        api.plug(comp_view)
+
+        app = Flask(__name__)
+        app.config['TESTING'] = True
+        app.register_blueprint(api, url_prefix="/api")
+        self.app = app.test_client()
+
+    def test_routes(self):
+        resp = self.app.get('api/')
+        data = json.loads(resp.data)
+        assert data == {
+            'routes': [
+                {
+                    'path': '/api/mult_opt',
+                    'name': 'api.mult_opt_options',
+                    'methods': ['HEAD', 'OPTIONS', 'GET']
+                },
+                {
+                    'path': '/api/mult_opt',
+                    'name': 'api.mult_opt_play',
+                    'methods': ['POST', 'OPTIONS']
+                },
+                {
+                    'path': '/api/',
+                    'name': 'api.routes',
+                    'methods': ['HEAD', 'OPTIONS', 'GET']
+                }
+            ],
+            'url_root': u'http://localhost/',
+            'api': 'api'
+        }
+
+    def test_options(self):
+        resp = self.app.get('api/mult_opt')
+        data = json.loads(resp.data)
+        print data
+        # check we have the same than in engine
+        assert False
+        assert "components" in data
+        assert data["args"] == ["number"]
+        assert data["returns"] == ["value"]
+
+    def test_play_simple(self):
+        # prepare query
+        rdata = {
+            'number': 3,
+            'config': {
+                'name': 'mult_opt',
+                'option': {
+                    'factor': 2,
+                }
+            }
+        }
+        json_data = json.dumps(rdata)
+        resp = self.app.post('api/mult_opt', data=json_data, content_type='application/json')
+        # load the results
+        resp_data = json.loads(resp.data)
+        # check it
+        assert "results" in resp_data
+        results = resp_data["results"]
+        assert "out" in results
+        assert len(results) == 1 # in, middle, out
+        assert results["out"] == 2*4
 
