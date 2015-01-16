@@ -20,129 +20,18 @@ from reliure.engine import Engine
 
 # for error code see http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP#Erreur_du_client
 
-
-def add_engine(blueprint, engineview, path="/"):
-    # remove last / on path
-    
-    # bind entry points
-    blueprint.add_url_rule('/engine/%s' % path, path, engineview.options,  methods=["GET"])
-    blueprint.add_url_rule('/engine/%s/options' % path,  '%s_options' %path, engineview.options,  methods=["GET"])
-    blueprint.add_url_rule('/engine/%s/play' % path, '%s_play' %path, engineview.play,  methods=["POST", "GET"])
-
 def app_routes(app):
-    #for rule in app.url_map.iter_rules():
-    _routes = []
-    for rule in app.url_map.iter_rules() :
-        _routes.append( { 'path':rule.rule,
-                          'name':rule.endpoint,
-                          'methods':list(rule.methods)
-                    })
-    return jsonify({ 'routes': _routes })
-    
-def api_routes(app, api):
-    #for rule in app.url_map.iter_rules():
-    _routes = []
-    prefix = ""  if api.url_prefix is None else api.url_prefix
-    for rule in app.url_map.iter_rules() :
-        if str(rule).startswith(prefix):
-            _routes.append( { 'path':rule.rule,
-                              'name':rule.endpoint,
-                              'methods':list(rule.methods)
-                        })
-    return jsonify({ 'api': api.name,
-                     'url_root' : request.url_root,
-                     'routes': _routes })
-
-def parse_request(request):
-    """ Parse request for :func:`play`
+    """ list of route of an app
     """
-    data = {}
-    options = {}
-    
-    ### get data
-    if request.headers['Content-Type'].startswith('application/json'):
-        # data in JSON
-        data = request.json
-        assert data is not None #FIXME: better error than assertError ?
-        ### get the options
-        if "options" in data:
-            options = data["options"]
-            del data["options"]
-    else:
-        # data in URL ?
-        abort(415) # Unsupported Media Type
-        # TODO: manage data in url
-#            args = request.args
-#            if args.get('_f') == 'semicolons':
-#                pairs = args.get('q').split(',')
-#                data['query'] = dict( tuple(x.split(':')) for x in pairs ) 
+    _routes = []
+    for rule in app.url_map.iter_rules():
+        _routes.append({
+            'path': rule.rule,
+            'name': rule.endpoint,
+            'methods': list(rule.methods)
+        })
+    return jsonify({'routes': _routes})
 
-    #TODO: parse data according to self._inputs
-    # note: all the inputs can realy be parsed only if the engine is setted
-    return data, options
-
-def run_engine(engineview, inputs_data, options):
-    """ Run the engine according to some inputs data and options
-    """
-    ### configure the engine
-    try:
-        engineview.engine.configure(options)
-    except ValueError as err:
-        #TODO beter manage input error: indicate what's wrong
-        abort(406)  # Not Acceptable
-
-    ### Check inputs
-    needed_inputs = engineview.engine.needed_inputs()
-    # check if all needed inputs are possible
-    if not all([inname in engineview._inputs for inname in needed_inputs]):
-        #Note: this may be check staticly
-        missing = [inname for inname in needed_inputs if inname not in engineview._inputs]
-        raise ValueError("With this configuration the inputs %s are needed but not declared." % missing)
-    # check if all inputs are given
-    if not all([inname in inputs_data for inname in needed_inputs]):
-        # configuration error
-        missing = [inname for inname in needed_inputs if inname not in inputs_data]
-        raise ValueError("With this configuration the inputs %s are missing." % missing)
-    #
-    ### parse inputs (and validate)
-    inputs = {}
-    for inname in needed_inputs:
-        input_val = engineview._inputs[inname].parse(inputs_data[inname])
-        engineview._inputs[inname].validate(input_val)
-        inputs[inname] = input_val
-    #
-    ### run the engine
-    error = False # by default ok
-    try:
-        raw_res = engineview.engine.play(**inputs)
-    except ReliurePlayError as err:
-        # this is the Reliure error that we can handle
-        error = True
-    finally:
-        pass
-    #
-    ### prepare outputs
-    outputs = {}
-    results = {}
-    if not error:
-        # prepare the outputs
-        for out_name, raw_out in raw_res.iteritems():
-            if out_name not in engineview._outputs:
-                continue
-            serializer = engineview._outputs[out_name]
-            # serialise output
-            if serializer is not None:
-                results[out_name] = serializer(raw_res[out_name])
-            else:
-                results[out_name] = raw_res[out_name]
-    ### prepare the retourning json
-    # add the results
-    outputs["results"] = results
-    ### serialise play metadata
-    outputs['meta'] = engineview.engine.meta.as_dict()
-    #note: meta contains the error (if any)
-    return outputs
-    
 
 class EngineView(object):
     def __init__(self, engine):
@@ -151,17 +40,14 @@ class EngineView(object):
         self._inputs = OrderedDict()
         # default outputs
         self._outputs = OrderedDict()
-    
-    def set_input_type(self, type_or_parse):
-        """ Set an unique input type.
-        
-        If you use this then you have only one input for the play.
+
+    def inputs(*args, **kwargs):
+        """ Set the inputs
         """
-        self._inputs = OrderedDict()
-        default_inputs = self.engine.in_name
-        if len(default_inputs) > 1:
-            raise ValueError("First block of the engine need more than one input, you sould use `add_inpout` for each of them")
-        self.add_input(default_inputs[0], type_or_parse)
+        for in_name in args:
+            self.add_input(in_name)
+        for in_name, type_or_parse in kwargs.iteritems():
+            self.add_output(in_name, type_or_parse)
 
     def add_input(self, in_name, type_or_parse):
         """ declare a possible input
@@ -172,20 +58,112 @@ class EngineView(object):
             raise ValueError("the given 'type_or_parse' is invalid")
         self._inputs[in_name] = type_or_parse
 
-    def set_outputs(self, outputs):
-        """ :param outputs: dict {name: serializer} """
-        if outputs is None:
-            raise ValueError("Invalid outputs should not be none.")
-        self._outputs = OrderedDict()
-        for name, serializer in outputs.iteritems():
-            self.add_output(name, serializer)
-        
-    def add_output(self, out_name, serializer=None):
+    def returns(*args, **kwargs):
+        """ Set the serialized outputs
+        """
+        for out_name in args:
+            self.add_output(out_name)
+        for out_name, type_or_serialize in kwargs.iteritems():
+            self.add_output(out_name, type_or_serialize)
+
+    def add_output(self, out_name, type_or_serialize=None):
         """ declare an output
         """
-        if serializer is not None and not callable(serializer):
-            raise ValueError("the given 'serializer' is invalid")
-        self._outputs[out_name] = serializer
+        if not isinstance(type_or_serialize, GenericType) and callable(type_or_serialize):
+            type_or_serialize = GenericType(serialize=type_or_serialize)
+        elif not isinstance(type_or_serialize, GenericType):
+            raise ValueError("the given 'type_or_serialize' is invalid")
+        self._outputs[out_name] = type_or_serialize
+
+    def parse_request(self, request):
+        """ Parse request for :func:`play`
+        """
+        data = {}
+        options = {}
+        
+        ### get data
+        if request.headers['Content-Type'].startswith('application/json'):
+            # data in JSON
+            data = request.json
+            assert data is not None #FIXME: better error than assertError ?
+            ### get the options
+            if "options" in data:
+                options = data["options"]
+                del data["options"]
+        else:
+            # data in URL ?
+            abort(415) # Unsupported Media Type
+            # TODO: manage data in url
+    #            args = request.args
+    #            if args.get('_f') == 'semicolons':
+    #                pairs = args.get('q').split(',')
+    #                data['query'] = dict( tuple(x.split(':')) for x in pairs ) 
+
+        #TODO: parse data according to self._inputs
+        # note: all the inputs can realy be parsed only if the engine is setted
+        return data, options
+
+    def run_engine(self, inputs_data, options):
+        """ Run the engine according to some inputs data and options
+        """
+        ### configure the engine
+        try:
+            self.engine.configure(options)
+        except ValueError as err:
+            #TODO beter manage input error: indicate what's wrong
+            abort(406)  # Not Acceptable
+
+        ### Check inputs
+        needed_inputs = self.engine.needed_inputs()
+        # check if all needed inputs are possible
+        if not all([inname in self._inputs for inname in needed_inputs]):
+            #Note: this may be check staticly
+            missing = [inname for inname in needed_inputs if inname not in self._inputs]
+            raise ValueError("With this configuration the inputs %s are needed but not declared." % missing)
+        # check if all inputs are given
+        if not all([inname in inputs_data for inname in needed_inputs]):
+            # configuration error
+            missing = [inname for inname in needed_inputs if inname not in inputs_data]
+            raise ValueError("With this configuration the inputs %s are missing." % missing)
+        #
+        ### parse inputs (and validate)
+        inputs = {}
+        for inname in needed_inputs:
+            input_val = self._inputs[inname].parse(inputs_data[inname])
+            self._inputs[inname].validate(input_val)
+            inputs[inname] = input_val
+        #
+        ### run the engine
+        error = False # by default ok
+        try:
+            raw_res = self.engine.play(**inputs)
+        except ReliurePlayError as err:
+            # this is the Reliure error that we can handle
+            error = True
+        finally:
+            pass
+        #
+        ### prepare outputs
+        outputs = {}
+        results = {}
+        if not error:
+            # prepare the outputs
+            for out_name, raw_out in raw_res.iteritems():
+                if out_name not in self._outputs:
+                    continue
+                serializer = self._outputs[out_name].serialize
+                # serialise output
+                if serializer is not None:
+                    results[out_name] = serializer(raw_res[out_name])
+                else:
+                    results[out_name] = raw_res[out_name]
+        ### prepare the retourning json
+        # add the results
+        outputs["results"] = results
+        ### serialise play metadata
+        outputs['meta'] = self.engine.meta.as_dict()
+        #note: meta contains the error (if any)
+        return outputs
 
     def options(self):
         """ Engine options discover HTTP entry point
@@ -198,17 +176,16 @@ class EngineView(object):
         conf["args"] = [iname for iname in self._inputs.iterkeys()]
         return jsonify(conf)
 
-    
     def play(self):
         """ Main http entry point: run the reliure engine
         """
-        data, options = parse_request(request)
+        data, options = self.parse_request(request)
         #warning: 'date' are the raw data from the client, not the de-serialised ones
-        outputs = run_engine(self, data, options)
+        outputs = self.run_engine(data, options)
         return jsonify(outputs)
-        
 
-class ReliureBlue(Blueprint):
+
+class ReliureJsonAPI(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
 
     This is a Flask Blueprint (see http://flask.pocoo.org/docs/blueprints/)
@@ -260,30 +237,60 @@ class ReliureBlue(Blueprint):
         }
     }
     """
-    def __init__(self, name, expose_route=True, **kwargs):
+    def __init__(self, name, expose_route=True, url_prefix=None, **kwargs):
         """ Build the Blueprint view over a :class:`.Engine`.
     
         :param engine: the reliure engine to serve through an json API
         :type engine: :class:`.Engine`.
         """
-        super(ReliureBlue, self).__init__(name, __name__, **kwargs)
+        # set url_prefix from name if not setted
+        if url_prefix is None:
+            url_prefix = "/%s" % name
+        super(ReliureBlue, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
         self.expose_route = expose_route
-        self.name = name
+        self.name = name 
 
     def __repr__(self):
         return self.name
 
-    def add_engine(self, view, path="/"):
-        add_engine(self, view, path=path)
-    
+    def _routes(self, app):
+        """ list of route for an API in a app
+        """
+        _routes = []
+        prefix = ""  if self.url_prefix is None else self.url_prefix
+        for rule in app.url_map.iter_rules():
+            if str(rule).startswith(prefix):
+                _routes.append({
+                    'path':rule.rule,
+                    'name':rule.endpoint,
+                    'methods':list(rule.methods)
+                })
+        returns = {
+            'api': self.name,
+            'url_root' : request.url_root,
+            'routes': _routes
+        }
+        return jsonify(returns)
+
+    def plug(self, view, path=None):
+        # bind entry points
+        self.add_url_rule('/%s' % path, '%s_options' % path, view.options, methods=["GET"])
+        self.add_url_rule('/%s' % path, '%s_play' % path, view.play, methods=["POST"])
+
     def register(self, app, options, first_registration=False):
+        # Note: the main api route '/' is added here because one know to have the
+        # app to get all the routes
         if self.expose_route:
-            self.add_url_rule('/', 'routes', lambda : api_routes(app, self) ,  methods=["GET"])
+            ## add the main api route
+            self.add_url_rule('/', 'routes', lambda: self._routes(app), methods=["GET"])
         super(ReliureBlue, self).register(app, options, first_registration=first_registration)
 
 
 class RemoteApi(Blueprint):
-    def __init__(self, url , **kwargs):
+    """ Proxy to a remote :class:`ReliureJsonAPI`
+    """
+
+    def __init__(self, url, **kwargs):
         """ Function doc
         :param url: engine api url
         """

@@ -521,7 +521,7 @@ class Block(object):
         if self.required and len(self.selected()) == 0:
             raise ReliureError("No component selected for block '%s'" % self.name)
 
-    def play(self, *inputs):
+    def play(self, *inputs): #XXX web: (*inputs, **named_inputs) in engine
         """ Run the selected components of the block. The selected components 
         are run with the already setted options.
 

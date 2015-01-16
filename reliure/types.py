@@ -23,7 +23,8 @@ class GenericType(object):
     default_validators = []  # Default set of validators
 
     def __init__(self, default=None, help="", multi=None, uniq=None,
-        choices=None, attrs=None, validators=[], parse=None):
+        choices=None, attrs=None, validators=[],
+        parse=None, serialize=None):
         """
         :param default: default value for the field
         :param help: description of what the data is
@@ -37,6 +38,7 @@ class GenericType(object):
         :param attrs: field attributes, dictionary of `{"name": AbstractType()}`
         :param validators: list of additional validators
         :param parse: a parsing function
+        :param serialize: a pre-serialization function
         """
         self._default = default
         self.help = help
@@ -67,6 +69,7 @@ class GenericType(object):
         # self.required = required  # test ds Doc ds le constructeur
         self.validators = self.default_validators + validators
         self._parse = parse
+        self._serialize = serialize
         self.choices = choices
         if choices is not None:
             self.validators.append(ChoiceValidator(choices))
@@ -122,6 +125,13 @@ class GenericType(object):
         """ parsing from string """
         if self._parse is not None:
             return self._parse(value)
+        else:
+            return value
+
+    def serialize(self, value):
+        """ pre-serialize value """
+        if self._serialize is not None:
+            return self._serialize(value)
         else:
             return value
 
