@@ -9,7 +9,7 @@ from reliure.engine import Engine
 from reliure.types import Numeric
 from reliure.exceptions import ValidationError
 
-from reliure.utils.web import ReliureJsonAPI, EngineView, ComponentView
+from reliure.web import ReliureAPI, EngineView, ComponentView
 
 class OptProductEx(Optionable):
     def __init__(self, name="mult_opt"):
@@ -20,7 +20,7 @@ class OptProductEx(Optionable):
         return arg * factor
 
 
-class TestReliureJsonAPISimple(unittest.TestCase):
+class TestReliureAPISimple(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -38,8 +38,8 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         egn_view.set_input_type(Numeric(vtype=int, min=-5, max=5))
         egn_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(egn_view, url_prefix="egn")
+        api = ReliureAPI()
+        api.register_view(egn_view, url_prefix="egn")
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -54,12 +54,22 @@ class TestReliureJsonAPISimple(unittest.TestCase):
             u'routes': [
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.egn_options_OLD',
+                    u'path': u'/api/egn/options'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.egn_OLD',
+                    u'path': u'/api/egn/play'
+                },
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.egn_options',
                     u'path': u'/api/egn'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.egn_play',
+                    u'name': u'api.egn',
                     u'path': u'/api/egn'
                 },
                 {
@@ -133,7 +143,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         assert results["out"] == 2*2*5
 
 
-class TestReliureJsonAPIMultiInputs(unittest.TestCase):
+class TestReliureAPIMultiInputs(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -153,8 +163,8 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
         egn_view.add_output("middle")
         egn_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(egn_view)
+        api = ReliureAPI()
+        api.register_view(egn_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -169,12 +179,22 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
             u'routes': [
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.my_egn_options_OLD',
+                    u'path': u'/api/my_egn/options'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.my_egn_OLD',
+                    u'path': u'/api/my_egn/play'
+                },
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.my_egn_options',
                     u'path': u'/api/my_egn'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.my_egn_play',
+                    u'name': u'api.my_egn',
                     u'path': u'/api/my_egn'
                 },
                 {
@@ -235,9 +255,7 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
         #TODO: test error when wrong input
 
 
-
-
-class TestReliureJsonAPIWithBlock(unittest.TestCase):
+class TestReliureAPIWithBlock(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -257,8 +275,8 @@ class TestReliureJsonAPIWithBlock(unittest.TestCase):
         op2_view.set_input_type(Numeric(vtype=int))
         op2_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(op2_view)
+        api = ReliureAPI()
+        api.register_view(op2_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -301,8 +319,8 @@ class TestComponentView(unittest.TestCase):
         comp_view.add_output("value", Numeric())
         comp_view.get("n/<number>")
 
-        api = ReliureJsonAPI()
-        api.plug(comp_view)
+        api = ReliureAPI()
+        api.register_view(comp_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -315,13 +333,23 @@ class TestComponentView(unittest.TestCase):
         assert data == {
             u'routes': [
                 {
+                    u'path': u'/api/mult_opt/options',
+                    u'name': u'api.mult_opt_options_OLD',
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
+                },
+                {
+                    u'path': u'/api/mult_opt/play',
+                    u'name': u'api.mult_opt_OLD',
+                    u'methods': [u'POST', u'OPTIONS']
+                },
+                {
                     u'path': u'/api/mult_opt',
                     u'name': u'api.mult_opt_options',
                     u'methods': [u'HEAD', u'OPTIONS', u'GET']
                 },
                 {
                     u'path': u'/api/mult_opt',
-                    u'name': u'api.mult_opt_play',
+                    u'name': u'api.mult_opt',
                     u'methods': [u'POST', u'OPTIONS']
                 },
                 {

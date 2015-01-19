@@ -54,8 +54,8 @@ class EngineView(object):
     >>> egn_view.get("/q/<in>")
     >>>
     >>> # this view can be added to a reliure API
-    >>> api = ReliureJsonAPI("api")
-    >>> api.plug(egn_view)
+    >>> api = ReliureAPI("api")
+    >>> api.register_view(egn_view)
     """
     def __init__(self, engine, name=None):
         self.engine = engine
@@ -271,7 +271,7 @@ class ComponentView(EngineView):
         super(ComponentView, self).add_output(out_name, type_or_serialize)
 
 
-class ReliureJsonAPI(èBlueprint):
+class ReliureAPI(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
 
     This is a Flask Blueprint (see http://flask.pocoo.org/docs/blueprints/)
@@ -292,8 +292,8 @@ class ReliureJsonAPI(èBlueprint):
     >>> egn_view.add_output("out")
     >>> 
     >>> ## create the API blueprint
-    >>> api = ReliureJsonAPI()
-    >>> api.plug(egn_view, url_prefix="egn")
+    >>> api = ReliureAPI()
+    >>> api.register_view(egn_view, url_prefix="egn")
     >>>
     >>> # here you get your blueprint
         for name, serializer in outputs.iteritems():
@@ -334,7 +334,7 @@ class ReliureJsonAPI(èBlueprint):
         # set url_prefix from name if not setted
         if url_prefix is None:
             url_prefix = "/%s" % name
-        super(ReliureJsonAPI, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
+        super(ReliureAPI, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
         self.name = name
         self.expose_route = True
         #Note: the main get "/" route exposition is binded in register method
@@ -342,7 +342,7 @@ class ReliureJsonAPI(èBlueprint):
     def __repr__(self):
         return self.name
 
-    def plug(self, view, url_prefix=None):
+    def register_view(self, view, url_prefix=None):
         """ Associate a :class:`EngineView` to this api
         """
         if url_prefix is None:
@@ -351,7 +351,11 @@ class ReliureJsonAPI(èBlueprint):
             url_prefix = view.name
         # bind entry points
         self.add_url_rule('/%s' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
-        self.add_url_rule('/%s' % url_prefix, '%s_play' % url_prefix, view.play, methods=["POST"])
+        self.add_url_rule('/%s' % url_prefix, '%s' % url_prefix, view.play, methods=["POST"])
+        # url
+        self.add_url_rule('/%s/options' % url_prefix, '%s_options_OLD' % url_prefix, view.options, methods=["GET"])
+        self.add_url_rule('/%s/play' % url_prefix, '%s_OLD' % url_prefix, view.play, methods=["POST"])
+
         # manage short route
         if view._short_route is not None:
             self.add_url_rule(
@@ -387,7 +391,7 @@ class ReliureJsonAPI(èBlueprint):
         if self.expose_route:
             ## add the main api route
             self.add_url_rule('/', 'routes', lambda: self._routes(app), methods=["GET"])
-        super(ReliureJsonAPI, self).register(app, options, first_registration=first_registration)
+        super(ReliureAPI, self).register(app, options, first_registration=first_registration)
 
 
 class RemoteApi(Blueprint):

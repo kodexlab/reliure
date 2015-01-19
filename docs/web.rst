@@ -16,7 +16,7 @@ If you want to expose on a http/json api a simple processing function:
 
 You need to build a "view" (a :class:`.ComponentView`) on this function:
 
->>> from reliure.utils.web import ComponentView
+>>> from reliure.web import ComponentView
 >>> view = ComponentView(count_a_and_b)
 >>> # you need to define the type of the input
 >>> from reliure.types import Text
@@ -28,9 +28,9 @@ You need to build a "view" (a :class:`.ComponentView`) on this function:
 
 Then you can register this view on a reliure API object:
 
->>> from reliure.utils.web import ReliureJsonAPI
->>> api = ReliureJsonAPI("api")
->>> api.plug(view, url_prefix="cab")
+>>> from reliure.web import ReliureAPI
+>>> api = ReliureAPI("api")
+>>> api.register_view(view, url_prefix="cab")
 
 This api can be plug to a flask app:
 
