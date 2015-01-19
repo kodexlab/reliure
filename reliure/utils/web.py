@@ -271,7 +271,7 @@ class ComponentView(EngineView):
         super(ComponentView, self).add_output(out_name, type_or_serialize)
 
 
-class ReliureJsonAPI(Blueprint):
+class ReliureJsonAPI(èBlueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
 
     This is a Flask Blueprint (see http://flask.pocoo.org/docs/blueprints/)
@@ -429,7 +429,6 @@ class RemoteApi(Blueprint):
         @self.errorhandler(405)
         def bad_request(error):
             msg = "errors 405 : request method allowed GET, POST with 'Content-Type=application/json' ", 405
-            print msg
             return msg
             
     def __repr__(self):
