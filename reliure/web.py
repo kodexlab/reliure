@@ -353,6 +353,9 @@ class ReliureAPI(Blueprint):
         self.add_url_rule('/%s' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
         self.add_url_rule('/%s' % url_prefix, '%s' % url_prefix, view.play, methods=["POST"])
         # url
+        self.add_url_rule('/%s/options' % url_prefix, '%s_options_OLD' % url_prefix, view.options, methods=["GET"])
+        self.add_url_rule('/%s/play' % url_prefix, '%s_OLD' % url_prefix, view.play, methods=["POST"])
+
         # manage short route
         if view._short_route is not None:
             self.add_url_rule(

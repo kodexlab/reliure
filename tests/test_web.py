@@ -54,6 +54,16 @@ class TestReliureAPISimple(unittest.TestCase):
             u'routes': [
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.egn_options_OLD',
+                    u'path': u'/api/egn/options'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.egn_OLD',
+                    u'path': u'/api/egn/play'
+                },
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.egn_options',
                     u'path': u'/api/egn'
                 },
@@ -167,6 +177,16 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         assert data == {
             u'api': u'api',
             u'routes': [
+                {
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
+                    u'name': u'api.my_egn_options_OLD',
+                    u'path': u'/api/my_egn/options'
+                },
+                {
+                    u'methods': [u'POST', u'OPTIONS'],
+                    u'name': u'api.my_egn_OLD',
+                    u'path': u'/api/my_egn/play'
+                },
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.my_egn_options',
@@ -312,6 +332,16 @@ class TestComponentView(unittest.TestCase):
         data = json.loads(resp.data)
         assert data == {
             u'routes': [
+                {
+                    u'path': u'/api/mult_opt/options',
+                    u'name': u'api.mult_opt_options_OLD',
+                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
+                },
+                {
+                    u'path': u'/api/mult_opt/play',
+                    u'name': u'api.mult_opt_OLD',
+                    u'methods': [u'POST', u'OPTIONS']
+                },
                 {
                     u'path': u'/api/mult_opt',
                     u'name': u'api.mult_opt_options',
