@@ -55,12 +55,12 @@ class TestReliureAPISimple(unittest.TestCase):
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.egn_options',
-                    u'path': u'/api/egn/options'
+                    u'path': u'/api/egn'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
                     u'name': u'api.egn',
-                    u'path': u'/api/egn/play'
+                    u'path': u'/api/egn'
                 },
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
@@ -72,7 +72,7 @@ class TestReliureAPISimple(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/egn/options')
+        resp = self.app.get('api/egn')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
@@ -83,7 +83,7 @@ class TestReliureAPISimple(unittest.TestCase):
         # prepare query
         rdata = {'in': '2'}
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/egn', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -97,15 +97,15 @@ class TestReliureAPISimple(unittest.TestCase):
         json_data = json.dumps({'in': 10})
         # max is 5, so validation error
         with self.assertRaises(ValidationError):
-            resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
+            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
 
         json_data = json.dumps({'in': "chat"})
         # parsing error
         with self.assertRaises(ValueError):
-            resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
+            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
 
         json_data = json.dumps({'in': 1})
-        resp = self.app.post('api/egn/play', data=json_data)
+        resp = self.app.post('api/egn', data=json_data)
         # error 415 "Unsupported Media Type" see:
         # http://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_Error
         assert resp.status_code == 415
@@ -122,7 +122,7 @@ class TestReliureAPISimple(unittest.TestCase):
             }]
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/egn', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -170,12 +170,12 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.my_egn_options',
-                    u'path': u'/api/my_egn/options'
+                    u'path': u'/api/my_egn'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
                     u'name': u'api.my_egn',
-                    u'path': u'/api/my_egn/play'
+                    u'path': u'/api/my_egn'
                 },
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
@@ -187,7 +187,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/my_egn/options')
+        resp = self.app.get('api/my_egn')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
@@ -204,7 +204,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
             }]
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/my_egn/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -222,7 +222,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
             'op1': []
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/my_egn/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -233,8 +233,6 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         assert results["out"] == 2*12
 
         #TODO: test error when wrong input
-
-
 
 
 class TestReliureAPIWithBlock(unittest.TestCase):
@@ -266,7 +264,7 @@ class TestReliureAPIWithBlock(unittest.TestCase):
         self.app = app.test_client()
 
     def test_options(self):
-        resp = self.app.get('api/op2/options')
+        resp = self.app.get('api/op2')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["components"] == self.engine.op2.as_dict()["components"]
@@ -281,7 +279,7 @@ class TestReliureAPIWithBlock(unittest.TestCase):
             'name': 'foisquatre',
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/op2/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/op2', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -315,12 +313,12 @@ class TestComponentView(unittest.TestCase):
         assert data == {
             u'routes': [
                 {
-                    u'path': u'/api/mult_opt/options',
+                    u'path': u'/api/mult_opt',
                     u'name': u'api.mult_opt_options',
                     u'methods': [u'HEAD', u'OPTIONS', u'GET']
                 },
                 {
-                    u'path': u'/api/mult_opt/play',
+                    u'path': u'/api/mult_opt',
                     u'name': u'api.mult_opt',
                     u'methods': [u'POST', u'OPTIONS']
                 },
@@ -340,7 +338,7 @@ class TestComponentView(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/mult_opt/options')
+        resp = self.app.get('api/mult_opt')
         data = json.loads(resp.data)
         print data
         # check we have the same than in engine
@@ -388,7 +386,7 @@ class TestComponentView(unittest.TestCase):
             }
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/mult_opt/play', data=json_data, content_type='application/json')
+        resp = self.app.post('api/mult_opt', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it

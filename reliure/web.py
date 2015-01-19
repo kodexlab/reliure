@@ -350,12 +350,8 @@ class ReliureAPI(Blueprint):
                 raise ValueError("EngineView has no name and path is not specified")
             url_prefix = view.name
         # bind entry points
-#        self.add_url_rule('/%s' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
-#        self.add_url_rule('/%s' % url_prefix, '%s' % url_prefix, view.play, methods=["POST"])
-        #TODO: change the default routes (all at /%s)
-        # old url links
-        self.add_url_rule('/%s/options' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
-        self.add_url_rule('/%s/play' % url_prefix, '%s' % url_prefix, view.play, methods=["POST"])
+        self.add_url_rule('/%s' % url_prefix, '%s_options' % url_prefix, view.options, methods=["GET"])
+        self.add_url_rule('/%s' % url_prefix, '%s' % url_prefix, view.play, methods=["POST"])
         # url
         # manage short route
         if view._short_route is not None:
