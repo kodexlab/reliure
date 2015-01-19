@@ -9,7 +9,7 @@ from reliure.engine import Engine
 from reliure.types import Numeric
 from reliure.exceptions import ValidationError
 
-from reliure.utils.web import ReliureJsonAPI, EngineView, ComponentView
+from reliure.web import ReliureAPI, EngineView, ComponentView
 
 class OptProductEx(Optionable):
     def __init__(self, name="mult_opt"):
@@ -20,7 +20,7 @@ class OptProductEx(Optionable):
         return arg * factor
 
 
-class TestReliureJsonAPISimple(unittest.TestCase):
+class TestReliureAPISimple(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -38,8 +38,8 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         egn_view.set_input_type(Numeric(vtype=int, min=-5, max=5))
         egn_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(egn_view, url_prefix="egn")
+        api = ReliureAPI()
+        api.register_view(egn_view, url_prefix="egn")
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -55,12 +55,12 @@ class TestReliureJsonAPISimple(unittest.TestCase):
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.egn_options',
-                    u'path': u'/api/egn'
+                    u'path': u'/api/egn/options'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.egn_play',
-                    u'path': u'/api/egn'
+                    u'name': u'api.egn',
+                    u'path': u'/api/egn/play'
                 },
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
@@ -72,7 +72,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/egn')
+        resp = self.app.get('api/egn/options')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
@@ -83,7 +83,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         # prepare query
         rdata = {'in': '2'}
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/egn', data=json_data, content_type='application/json')
+        resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -97,15 +97,15 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         json_data = json.dumps({'in': 10})
         # max is 5, so validation error
         with self.assertRaises(ValidationError):
-            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
+            resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
 
         json_data = json.dumps({'in': "chat"})
         # parsing error
         with self.assertRaises(ValueError):
-            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
+            resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
 
         json_data = json.dumps({'in': 1})
-        resp = self.app.post('api/egn', data=json_data)
+        resp = self.app.post('api/egn/play', data=json_data)
         # error 415 "Unsupported Media Type" see:
         # http://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_Error
         assert resp.status_code == 415
@@ -122,7 +122,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
             }]
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/egn', data=json_data, content_type='application/json')
+        resp = self.app.post('api/egn/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -133,7 +133,7 @@ class TestReliureJsonAPISimple(unittest.TestCase):
         assert results["out"] == 2*2*5
 
 
-class TestReliureJsonAPIMultiInputs(unittest.TestCase):
+class TestReliureAPIMultiInputs(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -153,8 +153,8 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
         egn_view.add_output("middle")
         egn_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(egn_view)
+        api = ReliureAPI()
+        api.register_view(egn_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -170,12 +170,12 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
                     u'name': u'api.my_egn_options',
-                    u'path': u'/api/my_egn'
+                    u'path': u'/api/my_egn/options'
                 },
                 {
                     u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.my_egn_play',
-                    u'path': u'/api/my_egn'
+                    u'name': u'api.my_egn',
+                    u'path': u'/api/my_egn/play'
                 },
                 {
                     u'methods': [u'HEAD', u'OPTIONS', u'GET'],
@@ -187,7 +187,7 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/my_egn')
+        resp = self.app.get('api/my_egn/options')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
@@ -204,7 +204,7 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
             }]
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
+        resp = self.app.post('api/my_egn/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -222,7 +222,7 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
             'op1': []
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
+        resp = self.app.post('api/my_egn/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -237,7 +237,7 @@ class TestReliureJsonAPIMultiInputs(unittest.TestCase):
 
 
 
-class TestReliureJsonAPIWithBlock(unittest.TestCase):
+class TestReliureAPIWithBlock(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
@@ -257,8 +257,8 @@ class TestReliureJsonAPIWithBlock(unittest.TestCase):
         op2_view.set_input_type(Numeric(vtype=int))
         op2_view.add_output("out")
 
-        api = ReliureJsonAPI()
-        api.plug(op2_view)
+        api = ReliureAPI()
+        api.register_view(op2_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -266,7 +266,7 @@ class TestReliureJsonAPIWithBlock(unittest.TestCase):
         self.app = app.test_client()
 
     def test_options(self):
-        resp = self.app.get('api/op2')
+        resp = self.app.get('api/op2/options')
         data = json.loads(resp.data)
         # check we have the same than in engine
         assert data["components"] == self.engine.op2.as_dict()["components"]
@@ -281,7 +281,7 @@ class TestReliureJsonAPIWithBlock(unittest.TestCase):
             'name': 'foisquatre',
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/op2', data=json_data, content_type='application/json')
+        resp = self.app.post('api/op2/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
@@ -301,8 +301,8 @@ class TestComponentView(unittest.TestCase):
         comp_view.add_output("value", Numeric())
         comp_view.get("n/<number>")
 
-        api = ReliureJsonAPI()
-        api.plug(comp_view)
+        api = ReliureAPI()
+        api.register_view(comp_view)
 
         app = Flask(__name__)
         app.config['TESTING'] = True
@@ -315,13 +315,13 @@ class TestComponentView(unittest.TestCase):
         assert data == {
             u'routes': [
                 {
-                    u'path': u'/api/mult_opt',
+                    u'path': u'/api/mult_opt/options',
                     u'name': u'api.mult_opt_options',
                     u'methods': [u'HEAD', u'OPTIONS', u'GET']
                 },
                 {
-                    u'path': u'/api/mult_opt',
-                    u'name': u'api.mult_opt_play',
+                    u'path': u'/api/mult_opt/play',
+                    u'name': u'api.mult_opt',
                     u'methods': [u'POST', u'OPTIONS']
                 },
                 {
@@ -340,7 +340,7 @@ class TestComponentView(unittest.TestCase):
         }
 
     def test_options(self):
-        resp = self.app.get('api/mult_opt')
+        resp = self.app.get('api/mult_opt/options')
         data = json.loads(resp.data)
         print data
         # check we have the same than in engine
@@ -388,7 +388,7 @@ class TestComponentView(unittest.TestCase):
             }
         }
         json_data = json.dumps(rdata)
-        resp = self.app.post('api/mult_opt', data=json_data, content_type='application/json')
+        resp = self.app.post('api/mult_opt/play', data=json_data, content_type='application/json')
         # load the results
         resp_data = json.loads(resp.data)
         # check it
