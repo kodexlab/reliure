@@ -51,7 +51,7 @@ class EngineView(object):
     >>> egn_view.add_output("count_a")  # note that by default block outputs are named by block's name
     >>> egn_view.add_output("count_b")
     >>> # one can specify a short url for this engine
-    >>> egn_view.get("/q/<in>")
+    >>> egn_view.play_route("/q/<in>")
     >>>
     >>> # this view can be added to a reliure API
     >>> api = ReliureAPI("api")
@@ -115,7 +115,7 @@ class EngineView(object):
             raise ValueError("the given 'type_or_serialize' is invalid")
         self._outputs[out_name] = type_or_serialize
 
-    def get(self, route):
+    def play_route(self, route):
         self._short_route = route
 
     def parse_request(self, request):

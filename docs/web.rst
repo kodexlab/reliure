@@ -24,7 +24,7 @@ You need to build a "view" (a :class:`.ComponentView`) on this function:
 >>> # Note that the output is named with your function name by default
 >>> 
 >>> # you can also specify a short url to reach your function
->>> view.get("<in>")
+>>> view.play_route("<in>")
 
 Then you can register this view on a reliure API object:
 

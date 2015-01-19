@@ -317,7 +317,7 @@ class TestComponentView(unittest.TestCase):
         comp_view = ComponentView(OptProductEx())
         comp_view.add_input("number", Numeric())
         comp_view.add_output("value", Numeric())
-        comp_view.get("n/<number>")
+        comp_view.play_route("n/<number>")
 
         api = ReliureAPI()
         api.register_view(comp_view)
