@@ -448,21 +448,21 @@ class RemoteApi(Blueprint):
             path = "/%s" % "/".join(s)
             print ">>>>>>" , route['path'],  endpoint, s
 
-            if 'engine' in s:
-                if not 'play' in s and not 'options' in s :
-                    http_path = "/%s" % "/".join(s[1:])
-                    print "RemoteApi init engine", path, endpoint
-                    self.add_url_rule( route['path'],  endpoint, self.forward)
-                    self.add_url_rule( "%s/options"% route['path'], "%s_options"% endpoint,self.forward)
-                    self.add_url_rule( "%s/play"% route['path'], "%s_play"% endpoint, self.forward,  methods=['GET','POST'])
-            elif 'engine' in s:
-                pass
-            else :
-                self.add_url_rule( "%s" % route['path'], "%s" % endpoint,self.forward)
+            self.add_url_rule( route['path'],  endpoint, self.forward, methods=methods)
+            #if 'engine' in s:
+                #if not 'play' in s and not 'options' in s :
+                    #http_path = "/%s" % "/".join(s[1:])
+                    #print "RemoteApi init engine", path, endpoint
+                    #self.add_url_rule( "%s/options"% route['path'], "%s_options"% endpoint,self.forward)
+                    #self.add_url_rule( "%s/play"% route['path'], "%s_play"% endpoint, self.forward,  methods=['GET','POST'])
+            #elif 'engine' in s:
+                #pass
+            #else :
+                #self.add_url_rule( "%s" % route['path'], "%s" % endpoint,self.forward)
 
         @self.errorhandler(405)
         def bad_request(error):
-            msg = "errors 405 : request method allowed GET, POST with 'Content-Type=application/json' ", 405
+            msg = "errors 405 : request method allowed GET, POST' ", 405
             return msg
             
     def __repr__(self):
@@ -486,25 +486,33 @@ class RemoteApi(Blueprint):
         
     def forward(self, **kwargs):
         """ remote http call to api endpoint 
-        accept *ONLY* GET and POST requests avec un content-type=application/json
+        accept *ONLY* GET and POST
         """
         # rewrite url path  
         prefix = self.url_prefix
         path= "" if request.path == "/" else request.path
         path = path[len(prefix):]
         url = '%s%s'% ( self.url_root[:-1], path )
+
+        print "FORWARDING to", url 
         
         if request.method == 'GET':
             resp = requests.get(url, params=request.args)
             data = json.loads(resp.content)
             return jsonify(data)
             
-        if request.method == 'POST':
+        elif request.method == 'POST':
             if request.headers['Content-Type'].startswith('application/json'):
                 # data in JSON
                 resp = requests.post(url, json=request.json)
-                data = json.loads(resp.content)
-                return jsonify(data)
+                data = request.json
+            else :
+                resp = requests.post(url, json=request.form)
+                data = request.form
+    
+            data = json.loads(resp.content)
+            return jsonify(data)
+                
                 
         # method not allowed aborting
         abort(405) # XXX
