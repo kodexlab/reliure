@@ -1,7 +1,12 @@
 .. _reliure-engine:
 
-Build a processing Engine
-=========================
+Processing engine
+====================
+
+.. contents:: `Table of contents`
+   :depth: 5
+   :local:
+
 
 simple exemple
 ~~~~~~~~~~~~~~

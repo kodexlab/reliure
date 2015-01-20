@@ -1,3 +1,7 @@
+******************
+HTTP/Json API
+******************
+
 .. _reliure-web:
 
 .. add some hidden import code
@@ -13,9 +17,6 @@
 
    <br />
 
-******************
-Build a Json API
-******************
 
 Reliure permits to build json api for simple processing function (or :class:`Optionable`)
 as well as for more complex :class:`.Engine`. The idea of the reliure API
