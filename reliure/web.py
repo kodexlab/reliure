@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
-""" :mod:`reliure.utils.web`
-============================
+""" :mod:`reliure.web`
+======================
 
 helpers to build HTTP/Json Api from reliure engines
 """

@@ -7,6 +7,12 @@
     >>> from pprint import pprint
     >>> import json
 
+.. Utils
+
+.. |br| raw:: html
+
+   <br />
+
 ******************
 Build a Json API
 ******************
@@ -22,8 +28,12 @@ processing modules.
 Let's see how it works on some simple examples !
 
 
-API over a component or function
-#################################
+.. contents:: `Table of contents`
+   :depth: 5
+   :local:
+
+Component or simple function
+#############################
 
 Expose a simple function
 ==========================
@@ -276,9 +286,140 @@ the API. With this, it is possible do list all the options of the component:
 
 
 
-API for a complex processing engine
-###################################
+Complex processing engine
+################################
 
-TODO
+Define your engine
+====================
 
+Here is a simple reliure engine that we will expose as an HTTP API.
+
+>>> from reliure.engine import Engine
+>>> engine = Engine("vowel", "consonant", "concat")
+>>> engine.vowel.setup(in_name="text")
+>>> engine.consonant.setup(in_name="text")
+>>> engine.concat.setup(in_name=["vowel", "consonant"], out_name="merge")
+>>>
+>>> from reliure import Composable
+>>> vowels = u"aiueoéèàùêôûîï"
+>>> @Composable
+... def extract_vowel(text):
+...     return "".join(char for char in text if char in vowels)
+>>> engine.vowel.set(extract_vowel)
+>>>
+>>> @Composable
+... def extract_consonant(text):
+...     return "".join(char for char in text if char not in vowels)
+>>> engine.consonant.set(extract_consonant)
+>>>
+>>> # for the merge we re-use the component defined in previous section:
+>>> engine.concat.set(StringMerge())
+
+The Figure :ref:`engine-schema` draw the processing schema of this small engine.
+
+.. _engine-schema:
+
+.. figure:: /_static/engine_schema_vowel_consonent.png
+    :align: center
+    :height: 200px
+    :alt: Engine schema
+    :figclass: align-center
+
+    Engine schema.
+
+    Exemple of engine that we will expose as an API. |br|
+    (See :func:`.engine_schema` to see how to generate such schema from an engine)
+
+    .. Generation du png :
+
+    .. doctest::
+        :hide:
+
+        >>> from reliure.utils import engine_schema
+        >>> schema = engine_schema(engine, ["merge"])
+        >>> schema.draw('docs/img/engine_schema_vowel_consonent.png', prog='dot')
+
+
+Create a view and register it on your api
+============================================
+
+As for a simple component we need to create a view over our engine :
+
+>>> from reliure.web import EngineView
+>>> view = EngineView(engine)
+
+And then to define the input and output types:
+
+>>> view.add_input("text", Text())
+>>> view.add_output("merge", Text())
+
+We can also specify a short url patern to run the engine:
+
+>>> view.play_route("<text>")
+
+Then you can create a :class:`.ReliureAPI` object and register this view on it:
+
+.. doctest::
+    :hide:
+
+    >>> api = ReliureAPI("api")
+
+Then we can register this new view to a reliure API object:
+
+>>> api.register_view(view, url_prefix="process")
+
+.. doctest::
+    :hide:
+
+    >>> # create a testing app (and client)
+    >>> app = Flask("my_app")
+    >>> app.register_blueprint(api, url_prefix="/api")
+    >>> app.config['TESTING'] = True            # this is just for testing purpose
+    >>> client = app.test_client()              # get a test client for our app
+
+
+Use it !
+===========
+
+>>> resp = client.get("/api/process/abcdea")
+>>> results = json.loads(resp.data)
+>>> pprint(results["results"])
+{u'merge': u'aeabcd'}
+>>> 
+>>> resp = client.get("/api/process/abcdea__bb_aaa")
+>>> results = json.loads(resp.data)
+>>> pprint(results["results"])
+{u'merge': u'aeaaaabcd__bb_'}
+
+Note that meta information is also available:
+
+>>> pprint(results["meta"])     # doctest: +SKIP
+    {u'details': [{u'details': [{u'errors': [],
+                                 u'name': u'extract_vowel',
+                                 u'time': 3.695487976074219e-05,
+                                 u'warnings': []}],
+                   u'errors': [],
+                   u'name': u'vowel:[extract_vowel]',
+                   u'time': 3.695487976074219e-05,
+                   u'warnings': []},
+                  {u'details': [{u'errors': [],
+                                 u'name': u'extract_consonant',
+                                 u'time': 3.0040740966796875e-05,
+                                 u'warnings': []}],
+                   u'errors': [],
+                   u'name': u'consonant:[extract_consonant]',
+                   u'time': 3.0040740966796875e-05,
+                   u'warnings': []},
+                  {u'details': [{u'errors': [],
+                                 u'name': u'StringMerge',
+                                 u'time': 5.507469177246094e-05,
+                                 u'warnings': []}],
+                   u'errors': [],
+                   u'name': u'concat:[StringMerge]',
+                   u'time': 5.507469177246094e-05,
+                   u'warnings': []}],
+     u'errors': [],
+     u'name': u'engine:[vowel:[extract_vowel], consonant:[extract_consonant], concat:[StringMerge]]',
+     u'time': 0.0001220703125,
+     u'warnings': []}
 
