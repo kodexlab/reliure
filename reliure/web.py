@@ -8,6 +8,7 @@ helpers to build HTTP/Json Api from reliure engines
 import sys
 import json
 import requests
+import logging
 
 from collections import OrderedDict
 
@@ -20,6 +21,8 @@ from reliure.exceptions import ReliurePlayError
 from reliure.engine import Engine, Block
 
 # for error code see http://fr.wikipedia.org/wiki/Liste_des_codes_HTTP#Erreur_du_client
+
+__all__ = ["app_routes", "EngineView", "ComponentView", "ReliureAPI", "RemoteApi"]
 
 def app_routes(app):
     """ list of route of an app
@@ -58,9 +61,10 @@ class EngineView(object):
     >>> api.register_view(egn_view)
     """
     def __init__(self, engine, name=None):
+        self._logger = logging.getLogger("reliure.%s" % self.__class__.__name__)
         self.engine = engine
         self.name = name
-        self._short_route = None
+        self._short_routes = []
         # default input
         self._inputs = OrderedDict()
         # default outputs
@@ -74,19 +78,11 @@ class EngineView(object):
         self._inputs = OrderedDict()
         default_inputs = self.engine.in_name
         if len(default_inputs) > 1:
-            raise ValueError("Need more than one input, you sould use `add_inpout` for each of them")
+            raise ValueError("Need more than one input, you sould use `add_input` for each of them")
         self.add_input(default_inputs[0], type_or_parse)
 
-    def inputs(*args, **kwargs):
-        """ Set the inputs
-        """
-        for in_name in args:
-            self.add_input(in_name)
-        for in_name, type_or_parse in kwargs.iteritems():
-            self.add_output(in_name, type_or_parse)
-
     def add_input(self, in_name, type_or_parse=None):
-        """ declare a possible input
+        """ Declare a possible input
         """
         if type_or_parse is None:
             type_or_parse = GenericType()
@@ -96,16 +92,27 @@ class EngineView(object):
             raise ValueError("the given 'type_or_parse' is invalid")
         self._inputs[in_name] = type_or_parse
 
-    def returns(*args, **kwargs):
-        """ Set the serialized outputs
+    def set_outputs(self, *outputs):
+        """ Set the outputs of the view
         """
-        for out_name in args:
-            self.add_output(out_name)
-        for out_name, type_or_serialize in kwargs.iteritems():
+        self._outputs = OrderedDict()
+        for output in outputs:
+            out_name = None
+            type_or_serialize = None
+            if isinstance((list, tuple), output):
+                if len(output) == 1:
+                    out_name = output[0]
+                elif len(output) == 2:
+                    out_name = output[0]
+                    type_or_serialize = output[1]
+                else:
+                    raise ValueError("invalid output format")
+            else:
+                out_name = output
             self.add_output(out_name, type_or_serialize)
 
     def add_output(self, out_name, type_or_serialize=None):
-        """ declare an output
+        """ Declare an output
         """
         if type_or_serialize is None:
             type_or_serialize = GenericType()
@@ -115,44 +122,45 @@ class EngineView(object):
             raise ValueError("the given 'type_or_serialize' is invalid")
         self._outputs[out_name] = type_or_serialize
 
-    def play_route(self, route):
-        self._short_route = route
+    def play_route(self, *routes):
+        """ Define routes for GET play.
+        
+        This use Flask route syntax, see:
+        http://flask.pocoo.org/docs/0.10/api/#url-route-registrations
+        """
+        self._short_routes = routes
 
-    def parse_request(self, frequest):
+    def _config_from_url(self):
+        """ Manage block configuration from requests.args (url params)
+        
+        May be overriden
+        """
+        self._logger.warn("_config_from_url not yet implemented for EngineView")
+        return {}
+
+    def parse_request(self):
         """ Parse request for :func:`play`
         """
         data = {}
         options = {}
-        
         ### get data
-        if frequest.headers['Content-Type'].startswith('application/json'):
+        if request.headers['Content-Type'].startswith('application/json'):
             # data in JSON
-            data = frequest.json
+            data = request.json
             assert data is not None #FIXME: better error than assertError ?
-            ### get the options
+            if "options" in data:
+                options = data["options"]
+                del data["options"]
         else:
             # data in URL/post
             data = dict()
-            data.update(frequest.form)
-            data.update(frequest.args)
+            data.update(request.form)
+            data.update(request.args)
             for key, value in data.iteritems():
-                print value
                 if isinstance(value, list) and len(value) == 1:
                     data[key] = value[0]
-                    
-            print data
-            # TODO: manage config/data in url
-    #            args = frequest.args
-    #            if args.get('_f') == 'semicolons':
-    #                pairs = args.get('q').split(',')
-    #                data['query'] = dict( tuple(x.split(':')) for x in pairs ) 
-
-        if "options" in data:
-            options = data["options"]
-            del data["options"]
-
-        #TODO: parse data according to self._inputs
-        # note: all the inputs can realy be parsed only if the engine is setted
+            # manage config in url
+            options = self._config_from_url()
         return data, options
 
     def run(self, inputs_data, options):
@@ -167,8 +175,8 @@ class EngineView(object):
         try:
             self.engine.configure(options)
         except ValueError as err:
-            #TODO beter manage input error: indicate what's wrong
-            abort(406)  # Not Acceptable
+            raise
+            abort(406, err)  # Not Acceptable
 
         ### Check inputs
         needed_inputs = self.engine.needed_inputs()
@@ -242,19 +250,16 @@ class EngineView(object):
     def play(self):
         """ Main http entry point: run the engine
         """
-        data, options = self.parse_request(request)
-        #warning: 'date' are the raw data from the client, not the de-serialised ones
+        data, options = self.parse_request()
+        #warning: 'data' are the raw data from the client, not the de-serialised ones
         outputs = self.run(data, options)
         return jsonify(outputs)
-
-    def config_from_url(self):
-        return {}
 
     def short_play(self, **kwargs):
         """ Main http entry point: run the engine
         """
         # options in URL arguments
-        config = self.config_from_url()
+        config = self._config_from_url()
         outputs = self.run(kwargs, config)
         return jsonify(outputs)
 
@@ -289,7 +294,9 @@ class ComponentView(EngineView):
         #XXX: attention il faut interdire les multi output
         super(ComponentView, self).add_output(out_name, type_or_serialize)
 
-    def config_from_url(self):
+    def _config_from_url(self):
+        """ Manage block configuration from requests.args (url params)
+        """
         config = {
             "name": self._blk.name,
             "options": {}
@@ -300,6 +307,7 @@ class ComponentView(EngineView):
             else:
                 config["options"][key] = value
         return config
+
 
 class ReliureAPI(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
@@ -360,6 +368,7 @@ class ReliureAPI(Blueprint):
     
         :param name: the name of this api (used as url prefix by default)
         """
+        self._logger = logging.getLogger("reliure.%s" % self.__class__.__name__)
         assert isinstance(name, basestring)
         # set url_prefix from name if not setted
         if url_prefix is None:
@@ -389,9 +398,9 @@ class ReliureAPI(Blueprint):
         self.add_url_rule('/%s/play' % url_prefix, '%s_OLD' % url_prefix, view.play, methods=["POST"])
 
         # manage short route
-        if view._short_route is not None:
+        for route in view._short_routes:
             self.add_url_rule(
-                '/%s/%s' % (url_prefix, view._short_route),
+                '/%s/%s' % (url_prefix, route),
                 '%s_short_play' % url_prefix,
                 view.short_play, methods=["GET"]
             )
