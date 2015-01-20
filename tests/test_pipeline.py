@@ -104,9 +104,6 @@ class TestOptionable(unittest.TestCase):
         with self.assertRaises(ValueError):
             comp.add_option("alpha beta", Numeric())
 
-        # for now, no multiple value
-        with self.assertRaises(NotImplementedError):
-            comp.add_option("gamma", Numeric(multi=True))
         # for now, no vector value
         with self.assertRaises(NotImplementedError):
             comp.add_option("gamma", Numeric(uniq=True))
