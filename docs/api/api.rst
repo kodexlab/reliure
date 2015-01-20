@@ -14,3 +14,4 @@ Voir :mod:`reliure.pipeline` par exemple, ou meme :class:`reliure.pipeline.Optio
     reliure.types
     reliure.utils
     reliure.validators
+    reliure.web

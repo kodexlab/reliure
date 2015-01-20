@@ -2,7 +2,7 @@
 import unittest
 
 import json
-from flask import Flask
+from flask import Flask, request 
 
 from reliure.pipeline import Optionable
 from reliure.engine import Engine
@@ -42,6 +42,7 @@ class TestReliureAPISimple(unittest.TestCase):
         api.register_view(egn_view, url_prefix="egn")
 
         app = Flask(__name__)
+        self.appp = app
         app.config['TESTING'] = True
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
@@ -103,26 +104,23 @@ class TestReliureAPISimple(unittest.TestCase):
         assert len(results) == 1
         assert results["out"] == 2*5*12
 
-    def test_play_fail(self):
-        json_data = json.dumps({'in': 10})
-        # max is 5, so validation error
-        with self.assertRaises(ValidationError):
-            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
+    def test_play_nojson(self):
+        # prepare query
+        data = {u'in': 3}
+        resp = self.app.post('api/egn', data=data)
 
-        json_data = json.dumps({'in': "chat"})
-        # parsing error
-        with self.assertRaises(ValueError):
-            resp = self.app.post('api/egn', data=json_data, content_type='application/json')
-
-        json_data = json.dumps({'in': 1})
-        resp = self.app.post('api/egn', data=json_data)
-        # error 415 "Unsupported Media Type" see:
-        # http://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_Error
-        assert resp.status_code == 415
+        # load the results
+        resp_data = json.loads(resp.data)
+        # check it
+        assert "results" in resp_data
+        results = resp_data["results"]
+        assert "out" in results
+        assert len(results) == 1
+        assert results["out"] == 3*5*12
 
     def test_play_simple_options(self):
         # prepare query
-        rdata = {'in': 2}
+        rdata = {'in': '2'}
         rdata["options"] = {
             'op2': [{
                 'name': 'mult_opt',
@@ -327,46 +325,6 @@ class TestComponentView(unittest.TestCase):
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
 
-    def test_routes(self):
-        resp = self.app.get('api/')
-        data = json.loads(resp.data)
-        assert data == {
-            u'routes': [
-                {
-                    u'path': u'/api/mult_opt/options',
-                    u'name': u'api.mult_opt_options_OLD',
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
-                },
-                {
-                    u'path': u'/api/mult_opt/play',
-                    u'name': u'api.mult_opt_OLD',
-                    u'methods': [u'POST', u'OPTIONS']
-                },
-                {
-                    u'path': u'/api/mult_opt',
-                    u'name': u'api.mult_opt_options',
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
-                },
-                {
-                    u'path': u'/api/mult_opt',
-                    u'name': u'api.mult_opt',
-                    u'methods': [u'POST', u'OPTIONS']
-                },
-                {
-                    u'path': u'/api/',
-                    u'name': u'api.routes',
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
-                },
-                {
-                    u'path': u'/api/mult_opt/n/<number>',
-                    u'name': u'api.mult_opt_short_play',
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET']
-                },
-            ],
-            u'url_root': u'http://localhost/',
-            u'api': u'api'
-        }
-
     def test_options(self):
         resp = self.app.get('api/mult_opt')
         data = json.loads(resp.data)
@@ -432,4 +390,5 @@ class TestComponentView(unittest.TestCase):
         assert "results" in resp_data
         results = resp_data["results"]
         assert results == {"value": 33*5}
+
 

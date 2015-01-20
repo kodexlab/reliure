@@ -118,29 +118,38 @@ class EngineView(object):
     def play_route(self, route):
         self._short_route = route
 
-    def parse_request(self, request):
+    def parse_request(self, frequest):
         """ Parse request for :func:`play`
         """
         data = {}
         options = {}
         
         ### get data
-        if request.headers['Content-Type'].startswith('application/json'):
+        if frequest.headers['Content-Type'].startswith('application/json'):
             # data in JSON
-            data = request.json
+            data = frequest.json
             assert data is not None #FIXME: better error than assertError ?
             ### get the options
-            if "options" in data:
-                options = data["options"]
-                del data["options"]
         else:
-            # data in URL ?
-            abort(415) # Unsupported Media Type
+            # data in URL/post
+            data = dict()
+            data.update(frequest.form)
+            data.update(frequest.args)
+            for key, value in data.iteritems():
+                print value
+                if isinstance(value, list) and len(value) == 1:
+                    data[key] = value[0]
+                    
+            print data
             # TODO: manage config/data in url
-    #            args = request.args
+    #            args = frequest.args
     #            if args.get('_f') == 'semicolons':
     #                pairs = args.get('q').split(',')
     #                data['query'] = dict( tuple(x.split(':')) for x in pairs ) 
+
+        if "options" in data:
+            options = data["options"]
+            del data["options"]
 
         #TODO: parse data according to self._inputs
         # note: all the inputs can realy be parsed only if the engine is setted
@@ -163,16 +172,22 @@ class EngineView(object):
 
         ### Check inputs
         needed_inputs = self.engine.needed_inputs()
+        # add default
+        for inname in needed_inputs:
+            if inname not in inputs_data \
+                    and inname in self._inputs \
+                    and self._inputs[inname].default is not None:
+                inputs_data[inname] = self._inputs[inname].default
         # check if all needed inputs are possible
         if not all(inname in self._inputs for inname in needed_inputs):
             #Note: this may be check staticly
             missing = [inname for inname in needed_inputs if inname not in self._inputs]
-            raise ValueError("With this configuration the inputs %s are needed but not declared." % missing)
+            raise ValueError("Inputs %s are needed but not declared." % missing)
         # check if all inputs are given
         if not all(inname in inputs_data for inname in needed_inputs):
             # configuration error
             missing = [inname for inname in needed_inputs if inname not in inputs_data]
-            raise ValueError("With this configuration the inputs %s are missing." % missing)
+            raise ValueError("Inputs %s are missing." % missing)
         #
         ### parse inputs (and validate)
         inputs = {}
@@ -232,11 +247,15 @@ class EngineView(object):
         outputs = self.run(data, options)
         return jsonify(outputs)
 
+    def config_from_url(self):
+        return {}
+
     def short_play(self, **kwargs):
         """ Main http entry point: run the engine
         """
-        options = {}
-        outputs = self.run(kwargs, options)
+        # options in URL arguments
+        config = self.config_from_url()
+        outputs = self.run(kwargs, config)
         return jsonify(outputs)
 
 
@@ -258,9 +277,9 @@ class ComponentView(EngineView):
         self._default_out_name = True
 
     def add_input(self, in_name, type_or_parse=None):
-        self._blk.setup(in_name=in_name)
-        #XXX: ca ne va pas si multiple input
         super(ComponentView, self).add_input(in_name, type_or_parse)
+        # update the block inputs names
+        self._blk.setup(in_name=self._inputs.keys())
 
     def add_output(self, out_name, type_or_serialize=None):
         if self._default_out_name:
@@ -270,6 +289,17 @@ class ComponentView(EngineView):
         #XXX: attention il faut interdire les multi output
         super(ComponentView, self).add_output(out_name, type_or_serialize)
 
+    def config_from_url(self):
+        config = {
+            "name": self._blk.name,
+            "options": {}
+        }
+        for key, value in request.args.iteritems():
+            if isinstance(value, list) and len(value) == 1:
+                config["options"][key] = value[0]
+            else:
+                config["options"][key] = value
+        return config
 
 class ReliureAPI(Blueprint):
     """ Standart Flask json API view over a Reliure :class:`.Engine`.
@@ -367,7 +397,6 @@ class ReliureAPI(Blueprint):
     def _routes(self, app):
         """ list of routes (you should have the app where this is register)
         """
-        print "###########  route"
         _routes = []
         prefix = self.url_prefix if self.url_prefix is not None else ""
         for rule in app.url_map.iter_rules():
@@ -382,7 +411,6 @@ class ReliureAPI(Blueprint):
             'url_root': request.url_root,
             'routes': _routes
         }
-        print returns
         return jsonify(returns)
 
     def register(self, app, options, first_registration=False):

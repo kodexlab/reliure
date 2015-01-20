@@ -613,7 +613,7 @@ class Block(object):
         if len(named_inputs):
             if self.in_name is None:
                 raise ValueError("named inputs given, but the block input's names are unknow")
-            if self.in_name != named_inputs.keys():
+            if set(self.in_name) != set(named_inputs.keys()):
                 raise ValueError("Inputs names are not matching with block input's names")
             inputs = [named_inputs[in_name] for in_name in self.in_name]
 
