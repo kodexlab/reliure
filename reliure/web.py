@@ -461,7 +461,6 @@ class RemoteApi(Blueprint):
         @self.errorhandler(405)
         def bad_request(error):
             msg = "errors 405 : request method allowed GET, POST with 'Content-Type=application/json' ", 405
-            print msg
             return msg
             
     def __repr__(self):
