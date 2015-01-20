@@ -1,65 +1,110 @@
 .. _reliure-web:
 
+**************
 Build a Json API
-================
+**************
 
-Reliure permits to build json api from simple function or more complex :class:`.Engine`.
+Reliure permits to build json api for simple processing function (or :class:`Optionable`)
+as well as for more complex :class:`.Engine`. The idea of the reliure API
+mechanism is : you manage data processing logic, reliure manages the "glue" job.
 
+Reliure web API are based on `Flask <http://flask.pocoo.org/>`_.
+A reliure API (:class:`ReliureAPI`) is a Flask :class:`.Blueprint` where you plug view of your 
+processing modules.
+
+Let's see how it works on some simple examples !
+
+
+.. add some hidden import code
+
+.. doctest::
+    :hide:
+
+    >>> from pprint import pprint
+    >>> import json
+
+
+API over a component or function
+############################
 
 Expose a simple function
-~~~~~~~~~~~~~~~~~~~~~~~~
+=====================
 
-If you want to expose on a http/json api a simple processing function:
+Let's imagine that we have the following hyper-complex data procesing method:
 
 >>> def count_a_and_b(chaine):
 ...     return chaine.count("a") + chaine.count("b")
 
-You need to build a "view" (a :class:`.ComponentView`) on this function:
+and we want it to be accessible on an HTTP/json supercool-powered API...
+in ohter word we just want that a GET on ``http://myapi.me.com/api/count_ab/totocotata``
+returns ``2`` and eventualy some other metadata (processing time for instance).
+
+Here is how we can do that with reliure.
+
+First you need to build a "view" (a :class:`.ComponentView`) on this function:
 
 >>> from reliure.web import ComponentView
 >>> view = ComponentView(count_a_and_b)
->>> # you need to define the type of the input
+
+Then you have to define the type of the input (the type will manage parsing
+from string/json):
+
 >>> from reliure.types import Text
 >>> view.add_input("in", Text())
->>> # Note that the output is named with your function name by default
->>> 
->>> # you can also specify a short url to reach your function
+>>> # Note that, by default, the output will be named with the function name
+
+You can also specify a short url patern to reach your function,
+this is done with flask route paterns syntax.
+Here we will simply indicate that the url (note that there will be url prefix)
+should match our uniq input:
+
 >>> view.play_route("<in>")
 
-Then you can register this view on a reliure API object:
+Then you can create a :class:`.ReliureAPI` object and register this view on it:
 
 >>> from reliure.web import ReliureAPI
 >>> api = ReliureAPI("api")
->>> api.register_view(view, url_prefix="cab")
+>>> api.register_view(view, url_prefix="count_ab")
 
-This api can be plug to a flask app:
+This api object can be plug to a flask app:
 
 >>> from flask import Flask
 >>> app = Flask("my_app")
->>> app.config['TESTING'] = True    # this is just for testing purpose
->>>
->>> # you can register your api this way:
 >>> app.register_blueprint(api, url_prefix="/api")
+
+
+.. doctest::
+    :hide:
+
+    >>> app.config['TESTING'] = True    # this is just for testing purpose
+    >>> client = app.test_client()              # get a test client for our app
 
 To illustrate API call, let's use flask testing mechanism:
 
->>> import json
->>> client = app.test_client()              # get a test client for our app
->>> 
->>> resp = client.get("/api/cab/abcdea")    # call our API
+>>> resp = client.get("/api/count_ab/abcdea")    # call our API
 >>> results = json.loads(resp.data)
->>> results["results"]
+>>> pprint(results["results"])
 {u'count_a_and_b': 3}
 >>> 
->>> resp = client.get("/api/cab/abcdea__bb_aaa")    # call our API
+>>> resp = client.get("/api/count_ab/abcdea__bb_aaa")
 >>> results = json.loads(resp.data)
->>> results["results"]
+>>> pprint(results["results"])
 {u'count_a_and_b': 8}
 
+Note that meta information is also available:
 
+>>> pprint(results["meta"])         #doctest: +SKIP
+{u'details': [{u'errors': [],
+               u'name': u'count_a_and_b',
+               u'time': 3.314018249511719e-05,
+               u'warnings': []}],
+ u'errors': [],
+ u'name': u'count_a_and_b:[count_a_and_b]',
+ u'time': 3.314018249511719e-05,
+ u'warnings': []}
 
-Managing multiple inputs, more complex component
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Managing options and multiple inputs
+================================
 
 One can imagine the following component that merge two sting with two different
 methods:
@@ -152,9 +197,9 @@ On can also list the options of this component:
 
 
 
-Plug a complex processing engine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+API for a complex processing engine
+###############################
 
-{{TODO}}
+TODO
 
 
