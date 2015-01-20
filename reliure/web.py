@@ -369,6 +369,8 @@ class ReliureAPI(Blueprint):
         self.expose_route = True
         #Note: the main get "/" route exposition is binded in register method
 
+        #TODO add error handler
+
     def __repr__(self):
         return self.name
 
