@@ -503,8 +503,6 @@ class RemoteApi(Blueprint):
         path = path[len(prefix):]
         url = '%s%s'% ( self.url_root[:-1], path )
 
-        print "FORWARDING to", url 
-        
         if request.method == 'GET':
             resp = requests.get(url, params=request.args)
             data = json.loads(resp.content)
@@ -521,7 +519,6 @@ class RemoteApi(Blueprint):
     
             data = json.loads(resp.content)
             return jsonify(data)
-                
-                
+                                
         # method not allowed aborting
         abort(405) # XXX
