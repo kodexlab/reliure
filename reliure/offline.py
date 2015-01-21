@@ -1,47 +1,6 @@
 #-*- coding:utf-8 -*-
 """ :mod:`reliure.offline`
 ======================
-
->>> documents = ["doc1", "doc2", "doc3", "doc4"]
-
->>> from reliure.pipeline import Composable
->>> @Composable
-... def doc_analyse(docs):
-...     for doc in docs:
-...         yield {
-...             "title": doc,
-...             "id": int(doc[3:]),
-...             "url": "http://lost.com/%s" % doc,
-...         }
-
->>> @Composable
-... def print_ulrs(docs):
-...     for doc in docs:
-...         print doc["url"]
-...         yield doc
-
->>> pipeline = doc_analyse | print_ulrs
-
->>> res = run(pipeline, documents)
-http://lost.com/doc1
-http://lost.com/doc2
-http://lost.com/doc3
-http://lost.com/doc4
->>> from pprint import pprint
->>> pprint(res)
-[{'id': 1, 'title': 'doc1', 'url': 'http://lost.com/doc1'},
- {'id': 2, 'title': 'doc2', 'url': 'http://lost.com/doc2'},
- {'id': 3, 'title': 'doc3', 'url': 'http://lost.com/doc3'},
- {'id': 4, 'title': 'doc4', 'url': 'http://lost.com/doc4'}]
-
-The exact same pipeline can now be run in // by using :func:`run_parallel`
-instead of :func:`run`
-
->>> # just take a bit more documents
->>> documents = ["doc%s" % d for d in range(20)]
->>> res = run_parallel(pipeline, documents, ncpu=2, chunksize=5)
->>> #pprint(res)
-
 """
 
 import logging

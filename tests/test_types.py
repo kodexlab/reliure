@@ -1,6 +1,5 @@
 #-*- coding:utf-8 -*-
 import unittest
-import cello
 
 from datetime import datetime
 from reliure.exceptions import ReliureTypeError, ValidationError
