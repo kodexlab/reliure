@@ -198,8 +198,8 @@ Then we can register this new view to a reliure API object:
     >>> client = app.test_client()              # get a test client for our app
 
 
-Finaly, just use !
--------------------
+Finaly, just use it !
+----------------------
 
 And then we can use it:
 

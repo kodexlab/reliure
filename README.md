@@ -12,12 +12,6 @@ License
 
 Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
 
-Doc
-===
-
-How to generate the doc ?
-
-$ make doc
 
 Requires
 =======
@@ -33,7 +27,7 @@ Contribute
     $ virtualenv ENV
     $ source ENV/bin/activate
     $ pip install -r requirements.txt
-    $ pip install -e ./
+    $ pip install -e ./                 # link reliure in local python packages
 
 To run tests:
 
