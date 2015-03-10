@@ -71,14 +71,17 @@ def argument_from_option(parser, component, opt_name, prefix=""):
     )
 
 
-def arguments_from_optionable(parser, component):
+def arguments_from_optionable(parser, component, prefix=""):
     """ Add argparse arguments from all options of one :class:`Optionable`
 
+    >>> # Let's build a dummy optionable component:
     >>> comp = Optionable()
     >>> comp.add_option("num", Numeric(default=1, max=12, help="An exemple of option"))
     >>> comp.add_option("title", Text(help="The title of the title"))
     >>> comp.add_option("ok", Boolean(help="is it ok ?", default=True))
     >>> comp.add_option("cool", Boolean(help="is it cool ?", default=False))
+    >>>
+    >>> # one can then register all the options of this component to a arg parser
     >>> parser = argparse.ArgumentParser(prog="PROG")
     >>> arguments_from_optionable(parser, comp)
     >>> parser.print_help()
@@ -93,5 +96,5 @@ def arguments_from_optionable(parser, component):
 
     """
     for option in component.options:
-        argument_from_option(parser, component, option)
+        argument_from_option(parser, component, option, prefix=prefix)
 
