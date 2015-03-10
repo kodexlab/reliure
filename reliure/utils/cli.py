@@ -93,8 +93,36 @@ def arguments_from_optionable(parser, component, prefix=""):
       --title TITLE  The title of the title
       --not-ok       is it ok ?
       --cool         is it cool ?
+    
+    The option values for a componant can then be retrieved with :func:`get_config_for`
 
+    .. doctest::
+        :hide:
+
+        >>> import argparse
+        >>> args = argparse.Namespace()
+        >>> args.num = 1
+        >>> args.title = "My title"
+        >>> args.ok = True
+        >>> args.cool = False
+
+    >>> args = parser.parse_args() # doctest: +SKIP
+    >>> config = get_config_for(args, comp)
+    >>> comp("input", **config) # doctest: +SKIP
+    "comp_result"
     """
     for option in component.options:
         argument_from_option(parser, component, option, prefix=prefix)
+
+
+def get_config_for(args, component, prefix=""):
+    """ Returns a dictionary of option value for a given component
+    
+    See :func:`arguments_from_optionable` documentation
+    """
+    config = {}
+    vargs = vars(args)
+    for option in component.options:
+        config[option] = vargs["%s%s" % (prefix, option)]
+    return config
 
