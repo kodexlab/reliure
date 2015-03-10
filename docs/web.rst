@@ -363,21 +363,21 @@ Then you can create a :class:`.ReliureAPI` object and register this view on it:
 .. doctest::
     :hide:
 
-    >>> api = ReliureAPI("api")
-
-Then we can register this new view to a reliure API object:
-
->>> api.register_view(view, url_prefix="process")
 
 .. doctest::
     :hide:
 
     >>> # create a testing app (and client)
     >>> app = Flask("my_app")
-    >>> app.register_blueprint(api, url_prefix="/api")
     >>> app.config['TESTING'] = True            # this is just for testing purpose
     >>> client = app.test_client()              # get a test client for our app
 
+Then we can register this new view to a reliure API object:
+
+>>> api = ReliureAPI("api")
+>>> api.register_view(view, url_prefix="process")
+>>> # and register thi api to our flask app :
+>>> app.register_blueprint(api, url_prefix="/api")
 
 Use it !
 ===========
