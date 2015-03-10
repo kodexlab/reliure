@@ -36,7 +36,7 @@ def argument_from_option(parser, component, opt_name, prefix=""):
     ...
     ValidationError: [u'Ensure this value ("20") is less than or equal to 12.']
     """
-    assert component.has_option(opt_name)
+    assert component.has_option(opt_name), "'%s' is not an option of the given component" % opt_name
     option = component.options[opt_name]
     argument_name = "%s%s" % (prefix, opt_name)
     otype = option.otype
