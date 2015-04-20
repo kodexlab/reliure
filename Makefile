@@ -36,7 +36,7 @@ testall:
 	py.test -v ./tests ./reliure ./docs --doctest-module --doctest-glob='*.rst' --cov reliure --cov-report html
 
 testcov:
-	py.test --cov reliure --cov-report term-missing
+	py.test -v ./tests ./reliure ./docs --doctest-module --doctest-glob='*.rst' --cov reliure --cov-report term-missing
 
 clean:
 	# removing .pyc filesin

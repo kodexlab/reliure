@@ -1,4 +1,5 @@
 pytest
+pytest-cov
 Sphinx
 requests
 flask
