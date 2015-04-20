@@ -28,14 +28,12 @@ Contribute
     $ source ENV/bin/activate
     $ pip install -r requirements.txt
 
-If you dev, in the same time, an other package than need your last reliure version, you can use : 
-
-    $ pip install -e th_good_path/reliure                 # link reliure in local python packages
-
 To run tests:
 
     $ pip install -I pytest
     $ make testall
+
+Warning: You need to have `reliure` accesible in the python path to run tests   
 
 To build the doc:
 
@@ -44,3 +42,7 @@ To build the doc:
     $ make doc
 
 then open: docs/_build/html/index.html
+
+If you dev, in the same time, an other package than need your last reliure version, you can use : 
+
+    $ pip install -e th_good_path/reliure                 # link reliure in local python packages
