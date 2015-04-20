@@ -13,11 +13,13 @@ License
 Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
 
 
-Requires
-=======
+Summary of requirements
+======================
 
 * py.test for testing
 * sphinx for documenation
+
+See requirements.txt or a full list of python packages dep
 
 Contribute
 ==========
