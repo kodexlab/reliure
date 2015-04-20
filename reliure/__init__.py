@@ -5,4 +5,4 @@
 __version__ = '0.1.0'
 __all__ = ['Composable', 'Optionable']
 
-from pipeline import Composable, Optionable
+from reliure.pipeline import Composable, Optionable
