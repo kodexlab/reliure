@@ -35,8 +35,6 @@ To run tests:
     $ pip install -I pytest
     $ make testall
 
-Warning: You need to have `reliure` accesible in the python path to run tests   
-
 To build the doc:
 
     $ pip install -I sphinx
@@ -44,6 +42,15 @@ To build the doc:
     $ make doc
 
 then open: docs/_build/html/index.html
+
+
+**Warning**: You need to have `reliure` accesible in the python path to run tests (and to build doc).
+For that you can install `reliure` as a link in local virtualenv:
+
+    $ pip install -e .
+
+(Note: this is indicadet in pytest good practice https://pytest.org/latest/goodpractises.html )
+
 
 If you dev, in the same time, an other package than need your last reliure version, you can use : 
 
