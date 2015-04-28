@@ -67,7 +67,7 @@ class Composable(object):
         if func and callable(func):
             self._func = func
             if name is None:
-                self.name = func.func_name
+                self.name = func.__name__
             else:
                 self.name = name
             update_wrapper(self, func)
@@ -155,7 +155,7 @@ class Optionable(Composable):
         """ print description of the component options
         """
         summary = []
-        for opt_name, opt in self._options.iteritems():
+        for opt_name, opt in self._options.items():
             if opt.hidden:
                 continue
             summary.append(opt.summary())
@@ -248,7 +248,7 @@ class Optionable(Composable):
     def clear_options_values(self):
         """ Clear all stored option values (so the defaults will be used)
         """
-        for opt_name, opt in self._options.iteritems():
+        for opt_name, opt in self._options.items():
             opt.clear()
 
     def set_options_values(self, options, parse=False, strict=False):
@@ -263,12 +263,12 @@ class Optionable(Composable):
         :type strict: bool
         """
         if strict:
-            for opt_name in options.iterkeys():
+            for opt_name in options.keys():
                 if not self.has_option(opt_name):
                     raise ValueError("'%s' is not a option of the component" % opt_name)
                 elif self.option_is_hidden(opt_name):
                     raise ValueError("'%s' is hidden, you can't set it" % opt_name)
-        for opt_name, opt in self._options.iteritems():
+        for opt_name, opt in self._options.items():
             if opt.hidden:
                 continue
             if opt_name in options:
@@ -283,7 +283,7 @@ class Optionable(Composable):
         :rtype: dict
         """
         values = {}
-        for opt_name, opt in self._options.iteritems():
+        for opt_name, opt in self._options.items():
             if hidden or not opt.hidden:
                 values[opt_name] = opt.value
         return values
@@ -310,7 +310,7 @@ class Optionable(Composable):
         :returns: **ordered** list of options pre-serialised (as_dict)
         :rtype: list `[opt_dict, ...]`
         """
-        return [opt.as_dict() for opt in self._options.itervalues() \
+        return [opt.as_dict() for opt in self._options.values() \
                                             if hidden or (not opt.hidden)]
 
     @staticmethod
@@ -441,7 +441,7 @@ class OptionableSequence(Optionable):
 
     def set_options_values(self, option_values, parse=True, strict=False):
         if strict:
-            for opt_name in option_values.iterkeys():
+            for opt_name in option_values.keys():
                 if not self.has_option(opt_name):
                     raise ValueError("'%s' is not a option of the component" % opt_name)
                 elif self.option_is_hidden(opt_name):

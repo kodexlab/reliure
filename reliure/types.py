@@ -11,6 +11,7 @@ Class
 -----
 
 """
+import six
 import datetime
 
 from reliure.exceptions import ReliureTypeError, ValidationError
@@ -190,59 +191,52 @@ class Numeric(GenericType):
         info["max"] = self.max
         return info
 
+
 class Text(GenericType):
-    """ Text type (str or unicode)
+    """ Text type (in python 2 take care that is unicode)
     
     if not setted default value is an empty string.
     """
-    # valid type for text
-    _types_ = [unicode, str]
     default_encoding = "utf8"
     
-    def __init__(self, vtype=unicode, encoding=None, **kwargs):
-        if "default" not in kwargs and u"default" not in kwargs:
-            kwargs["default"] = vtype("")
+    def __init__(self, encoding=None, **kwargs):
+        if "default" not in kwargs:
+            kwargs["default"] = u""
         super(Text, self).__init__(**kwargs)
         if encoding is not None:
             self.default_encoding = encoding
-        if vtype not in Text._types_:
-            raise ReliureTypeError('Wrong type for Text %s' % Numeric._types_ )
-        self.vtype = vtype
-        self.validators.append(TypeValidator(vtype))
+            #TODO: manage encoding in py3 from value
+        if six.PY2:
+            self.validators.append(TypeValidator(unicode))
+        else:
+            self.validators.append(TypeValidator(str))
         self._init_validation()
 
     def parse(self, value):
-        if isinstance(value, self.vtype):
-            parsed = value
-        else:
-            #TODO: meilleuir gestion de l'encoding
-            if self.vtype == unicode:
+        parsed = value
+        if six.PY2:
+            #TODO: meillieur gestion de l'encoding
+            if type(value) != unicode:
                 parsed = value.decode(self.default_encoding)
-            else:
-                parsed = value.encode(self.default_encoding)
         return self.validate(parsed)
 
     def as_dict(self):
         info = super(Text, self).as_dict()
-        info["vtype"] = 'unicode' if self.vtype == unicode else 'str'
-        if self.vtype is str:
-            info["encoding"] = self.default_encoding
+        info["vtype"] = 'unicode' # just for compatibility
+        info["encoding"] = self.default_encoding
         return info
 
 
 class Boolean(GenericType):
     default_validators = [TypeValidator(bool)]
     
-    TRUE_VALUES = set([True, 1, u'1', u'yes', u'oui', u'o', u'true'])
+    TRUE_VALUES = set([True, 1, '1', 'yes', 'oui', 'o', 'true'])
     
     def __init__(self, **kwargs):
         super(Boolean, self).__init__(**kwargs)
 
     def parse(self, value):
-        if isinstance(value, str):
-            value = value.decode("utf8")
-        if isinstance(value, unicode):
-            value = value.lower()
+        value = value.lower()
         return value in Boolean.TRUE_VALUES
 
 

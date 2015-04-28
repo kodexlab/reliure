@@ -10,6 +10,7 @@ import logging
 import warnings
 import traceback
 import itertools
+import six
 from collections import OrderedDict
 
 from reliure.exceptions import ReliureError
@@ -44,8 +45,10 @@ class BasicPlayMeta(object):
     ...     # for testing purpose we put a fixed time
     ...     meta.time = 9.2e-5
     >>> # one can get a pre-serialization of the collected meta data
-    >>> meta.as_dict()
-    {'errors': [], 'name': 'TheComp', 'warnings': [], 'time': 9.2e-05}
+    >>> from pprint import pprint
+    >>> pprint(meta.as_dict())
+    {'errors': [], 'name': 'TheComp', 'time': 9.2e-05, 'warnings': []}
+
     """
     def __init__(self, component):
         self._name = component.name
@@ -103,7 +106,7 @@ class BasicPlayMeta(object):
         ...     meta.add_error(error)
         >>> from pprint import pprint
         >>> pprint(meta.as_dict())
-        {'errors': ['integer division or modulo by zero'],
+        {'errors': ['division by zero'],
          'name': 'TheComp',
          'time': 0.0,
          'warnings': []}
@@ -289,7 +292,7 @@ class Block(object):
 
     @name.setter
     def name(self, name):
-        if not isinstance(name, basestring):
+        if not isinstance(name, six.string_types):
             raise ValueError("Block name should be a string")
         if ' ' in name:
             raise ValueError("Block name should not contain space")
@@ -303,7 +306,7 @@ class Block(object):
     def __iter__(self):
         """ iterate over all components
         """
-        return self._components.itervalues()
+        return six.itervalues(self._components)
 
     def __getitem__(self, name):
         """ returns the component of the given name
@@ -320,7 +323,7 @@ class Block(object):
         
         Component names will have the same order than components
         """
-        return self._components.keys()
+        return list(self._components.keys())
 
     def needed_inputs(self):
         """ Return a list of (needed) inputs names
@@ -338,12 +341,12 @@ class Block(object):
         default = self._defaults
         # if require and no default, the first component as default
         if not len(default) and self.required and len(self._components):
-            default = [self._components.itervalues().next().name]
+            default = [six.next(six.itervalues(self._components)).name]
         return default
 
     @defaults.setter
     def defaults(self, defaults):
-        if isinstance(defaults, basestring):
+        if isinstance(defaults, six.string_types):
             defaults = [defaults]
         for comp_name in defaults:
             if not comp_name in self._components:
@@ -405,7 +408,7 @@ class Block(object):
             the defaults values.
         """
         self._selected = []
-        for component in self._components.itervalues():
+        for component in self._components.values():
             if isinstance(component, Optionable):
                 self._logger.info("<block: %s> clear selection an options for '%s'" % (self.name, component.name))
                 component.clear_options_values()
@@ -737,15 +740,6 @@ class Engine(object):
         self[name].set(*components)
         self[name].setup(**parameters)
 
-    @property
-    def in_name(self):
-        """ Give the input name of the **first** block.
-        
-        If this first block is not required or if other block need some inputs
-        then you beter have to look at :func:`needed_inputs`.
-        """
-        return iter(self).next().in_name or [Engine.DEFAULT_IN_NAME]
-
     def __contains__(self, name):
         """ Whether a block of the given name exists
         """
@@ -763,6 +757,15 @@ class Engine(object):
         """
         return self[name]
 
+    @property
+    def in_name(self):
+        """ Give the input name of the **first** block.
+        
+        If this first block is not required or if other block need some inputs
+        then you beter have to look at :func:`needed_inputs`.
+        """
+        return six.next(iter(self)).in_name or [Engine.DEFAULT_IN_NAME]
+
     def __len__(self):
         """ Returns block count
         """
@@ -771,7 +774,7 @@ class Engine(object):
     def __iter__(self):
         """ Iterate over all blocks
         """
-        return self._blocks.itervalues()
+        return six.itervalues(self._blocks)
 
     def names(self):
         """ Returns the list of block names
@@ -808,11 +811,11 @@ class Engine(object):
         ##TODO use block configuration
         self._logger.info("\n\n\t\t\t ** ============= configure engine ============= ** \n")
         # normalise input format
-        for block_name in config.iterkeys():
+        for block_name in config.keys():
             if isinstance(config[block_name], dict):
                 config[block_name] = [config[block_name]]
         # check errors
-        for block_name, request_comps in config.iteritems():
+        for block_name, request_comps in config.items():
             if block_name not in self:
                 raise ValueError("Block '%s' doesn't exist !" % block_name)
             block = self[block_name]
@@ -836,7 +839,7 @@ class Engine(object):
             # remove selection and reset to default options
             block.clear_selections()
         # configure the blocks
-        for block_name, request_comps in config.iteritems():
+        for block_name, request_comps in config.items():
             block = self[block_name]
             # select and set options
             for req_comp in request_comps:
@@ -890,13 +893,13 @@ class Engine(object):
         >>> engine.op2.append(lambda x:x*2)
         >>> engine.op1.select('<lambda>')
         >>> engine.needed_inputs()
-        set(['in'])
+        {'in'}
 
         But now if we unactivate the first component:
 
         >>> engine.op1.clear_selections()
         >>> engine.needed_inputs()
-        set(['middle'])
+        {'middle'}
 
         More complex example:
 
@@ -905,8 +908,8 @@ class Engine(object):
         >>> engine.op2.setup(in_name=["middle", "in2"], out_name="out")
         >>> engine.op1.append(lambda x:x+2)
         >>> engine.op2.append(lambda x, y:x*y)
-        >>> engine.needed_inputs()
-        set(['in2', 'in'])
+        >>> engine.needed_inputs() == {'in', 'in2'}
+        True
 
         Note that by default the needed input is 'input':
         
@@ -914,7 +917,7 @@ class Engine(object):
         >>> engine.op1.append(lambda x:x+2)
         >>> engine.op2.append(lambda x:x*2)
         >>> engine.needed_inputs()
-        set(['input'])
+        {'input'}
         """
         needed = set()
         available = set()       # set of available data

@@ -16,7 +16,7 @@ def run(pipeline, input_gen, options={}):
     >>> @Composable
     ... def print_each(letters):
     ...     for letter in letters:
-    ...         print letter
+    ...         print(letter)
     ...         yield letter
     >>> # that we want to run over a given input:
     >>> input = "abcde"
@@ -117,6 +117,9 @@ def run_parallel(pipeline, input_gen, options={}, ncpu=4, chunksize=200):
 
 
 def main():
+    """ Small run usage exemple
+    """
+    #TODO: need to be mv in .rst doc
     from reliure.pipeline import Composable
     @Composable
     def doc_analyse(docs):
@@ -129,14 +132,14 @@ def main():
     @Composable
     def print_ulrs(docs):
         for doc in docs:
-            print doc["url"]
+            print(doc["url"])
             yield doc
 
     pipeline = doc_analyse | print_ulrs
 
     documents = ("doc_%s" % d for d in xrange(20))
     res = run_parallel(pipeline, documents, ncpu=2, chunksize=5)
-    print res
+    print(res)
 
 if __name__ == '__main__':
     import sys

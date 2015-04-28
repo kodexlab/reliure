@@ -138,7 +138,7 @@ class SpeedLogger(Composable):
     >>> from reliure.utils.log import get_basic_logger
     >>> logger = get_basic_logger(logging.INFO)
     >>> from reliure.offline import run
-    >>> results = run(pipeline, xrange(100000))
+    >>> results = run(pipeline, range(100000))
     
     You will get a logging like that::
 

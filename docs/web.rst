@@ -91,26 +91,26 @@ This ``api`` object can be plug to a flask app (it is a Flask :class:`.Blueprint
 To illustrate API call, let's use Flask testing mechanism:
 
 >>> resp = client.get("/api/count_ab/abcdea")    # call our API
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> pprint(results["results"])
-{u'count_a_and_b': 3}
+{'count_a_and_b': 3}
 >>> 
 >>> resp = client.get("/api/count_ab/abcdea__bb_aaa")
 >>> results = json.loads(resp.data)
 >>> pprint(results["results"])
-{u'count_a_and_b': 8}
+{'count_a_and_b': 8}
 
 Note that meta information is also available:
 
 >>> pprint(results["meta"])         #doctest: +SKIP
-{u'details': [{u'errors': [],
-               u'name': u'count_a_and_b',
+{'details': [{u'errors': [],
+               u'name': 'count_a_and_b',
                u'time': 3.314018249511719e-05,
                u'warnings': []}],
- u'errors': [],
- u'name': u'count_a_and_b:[count_a_and_b]',
- u'time': 3.314018249511719e-05,
- u'warnings': []}
+ 'errors': [],
+ 'name': u'count_a_and_b:[count_a_and_b]',
+ 'time': 3.314018249511719e-05,
+ 'warnings': []}
 
 
 Managing options and multiple inputs

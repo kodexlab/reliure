@@ -9,6 +9,7 @@ import sys
 import json
 import requests
 import logging
+import six
 
 from collections import OrderedDict
 
@@ -156,7 +157,7 @@ class EngineView(object):
             data = dict()
             data.update(request.form)
             data.update(request.args)
-            for key, value in data.iteritems():
+            for key, value in six.iteritems(data):
                 if isinstance(value, list) and len(value) == 1:
                     data[key] = value[0]
             # manage config in url
@@ -182,6 +183,7 @@ class EngineView(object):
         needed_inputs = self.engine.needed_inputs()
         # add default
         for inname in needed_inputs:
+            print(inname)
             if inname not in inputs_data \
                     and inname in self._inputs \
                     and self._inputs[inname].default is not None:
@@ -219,7 +221,7 @@ class EngineView(object):
         results = {}
         if not error:
             # prepare the outputs
-            for out_name, raw_out in raw_res.iteritems():
+            for out_name, raw_out in six.iteritems(raw_res):
                 if out_name not in self._outputs:
                     continue
                 serializer = self._outputs[out_name].serialize
@@ -242,9 +244,9 @@ class EngineView(object):
         #configure engine with an empty dict to ensure default selection/options
         self.engine.configure({})
         conf = self.engine.as_dict()
-        conf["returns"] = [oname for oname in self._outputs.iterkeys()]
+        conf["returns"] = [oname for oname in six.iterkeys(self._outputs)]
         # Note: we overide args to only list the ones that are declared in this view
-        conf["args"] = [iname for iname in self._inputs.iterkeys()]
+        conf["args"] = [iname for iname in six.iterkeys(self._inputs)]
         return jsonify(conf)
 
     def play(self):
@@ -284,7 +286,7 @@ class ComponentView(EngineView):
     def add_input(self, in_name, type_or_parse=None):
         super(ComponentView, self).add_input(in_name, type_or_parse)
         # update the block inputs names
-        self._blk.setup(in_name=self._inputs.keys())
+        self._blk.setup(in_name=list(self._inputs.keys()))
 
     def add_output(self, out_name, type_or_serialize=None):
         if self._default_out_name:
@@ -301,7 +303,7 @@ class ComponentView(EngineView):
             "name": self._blk.name,
             "options": {}
         }
-        for key, value in request.args.iteritems():
+        for key, value in six.iteritems(request.args):
             if isinstance(value, list) and len(value) == 1:
                 config["options"][key] = value[0]
             else:
@@ -334,7 +336,6 @@ class ReliureAPI(Blueprint):
     >>> api.register_view(egn_view, url_prefix="egn")
     >>>
     >>> # here you get your blueprint
-        for name, serializer in outputs.iteritems():
     >>> # you can register it to your app with
     >>> app.register_blueprint(api, url_prefix="/api")    # doctest: +SKIP
 
@@ -369,7 +370,7 @@ class ReliureAPI(Blueprint):
         :param name: the name of this api (used as url prefix by default)
         """
         self._logger = logging.getLogger("reliure.%s" % self.__class__.__name__)
-        assert isinstance(name, basestring)
+        assert isinstance(name, six.string_types)
         # set url_prefix from name if not setted
         if url_prefix is None:
             url_prefix = "/%s" % name
@@ -441,7 +442,7 @@ class RemoteApi(Blueprint):
         """ Function doc
         :param url: engine api url
         """
-        print "RemoteApi @ %s" % url
+        #print("RemoteApi @ %s" % url)
         resp = requests.get(url)
         api = json.loads(resp.content)
         
@@ -455,7 +456,7 @@ class RemoteApi(Blueprint):
             methods = route['methods']
             s =  route['path'].split('/')[2:]
             path = "/%s" % "/".join(s)
-            print ">>>>>>" , route['path'],  endpoint, s
+            print(">>>>>>" , route['path'], endpoint, s)
 
             self.add_url_rule( route['path'],  endpoint, self.forward, methods=methods)
             #if 'engine' in s:
@@ -479,7 +480,7 @@ class RemoteApi(Blueprint):
 
     # useless
     def add_url_rule(self, path, endpoint, *args, **kwargs):
-        print "RULE", path , endpoint
+        #print("RULE", path , endpoint)
         super(RemoteApi, self).add_url_rule(path, endpoint, *args, **kwargs)
 
     def register(self, app, options, first_registration=False):

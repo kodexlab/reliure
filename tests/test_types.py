@@ -1,7 +1,8 @@
 #-*- coding:utf-8 -*-
 import unittest
-
+import six
 from datetime import datetime
+
 from reliure.exceptions import ReliureTypeError, ValidationError
 from reliure.types import GenericType, Numeric, Text, Boolean, Datetime
 
@@ -82,45 +83,35 @@ class TestFieldTypes(unittest.TestCase):
         )
 
     def test_text(self):
-        # setting wrong types 
-        self.assertRaises(ReliureTypeError, lambda: Text(vtype=any))
-        
         # check unicode
-        f_unicode = Text(vtype=unicode)
+        f_unicode = Text()
         self.assertNotEqual(repr(f_unicode), "")
         # good type
         self.assertEqual(f_unicode.validate(u"boé"), u'boé')
-        self.assertRaises(ValidationError, f_unicode.validate, "boo")
+        if six.PY2:
+            self.assertRaises(ValidationError, f_unicode.validate, "boo")
         self.assertRaises(ValidationError, f_unicode.validate, 1)
         
         self.assertEqual(f_unicode.parse("boé"), u'boé')
         self.assertEqual(f_unicode.parse(u"boé"), u'boé')
 
-        # check str
-        f_str = Text(vtype=str)
-        self.assertNotEqual(repr(f_str), "")
-        # good type
-        self.assertEqual(f_str.validate("boé"), 'boé')
-        self.assertRaises(ValidationError, f_str.validate, u"boo")
-        self.assertRaises(ValidationError, f_str.validate, 1)
-
-        self.assertEqual(f_str.parse("boé"), 'boé')
-        self.assertEqual(f_str.parse(u"boé"), 'boé')
-
 
     def test_choices(self):
         with self.assertRaises(ValidationError):
-            choice = Text(vtype=str, default="a", choices=["b", "c", "d"])
-        with self.assertRaises(ValidationError):
-            #unicode needed
-            choice = Text(default="a", choices=["a", "b", "c", "d"])
+            choice = Text(default=u"a", choices=[u"b", u"c", u"d"])
+
         choice = Text(default=u"a", choices=[u"a", u"b", u"c", u"d"])
+        # test change default
         with self.assertRaises(ValidationError):
             choice.default = u"e"
-        with self.assertRaises(ValidationError):
-            choice.default = "a"
         choice.default = u"c"
         self.assertEqual(choice.default, u"c")
+        # unicode needed in python2
+        if six.PY2:
+            with self.assertRaises(ValidationError):
+                choice.default = "a"
+            with self.assertRaises(ValidationError):
+                choice = Text(default="a", choices=["a", "b", "c", "d"])
         
         # validate
         self.assertEqual(choice.validate(u"a"), u"a")

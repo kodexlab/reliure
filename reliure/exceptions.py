@@ -2,6 +2,7 @@
 """ :mod:`reliure.exceptions`
 ==========================
 """
+import six
 
 class ReliureError(Exception):
     """Basic reliure error"""
@@ -14,39 +15,24 @@ class ReliurePlayError(Exception):
     u"""Error occuring at engine 'play' time
     
     This errors can be show to the user
-    
-    The message could be given as a str (not unicode), it will be decode as utf8 :
-    
-    >>> error = ReliurePlayError("un méssage en str")
-    >>> error.msg
-    u'un m\\xe9ssage en str'
 
-    Note that `str()` will return an utf8 string:
-    >>> type(str(error))
-    <type 'str'>
-    >>> str(error)
-    'un m\\xc3\\xa9ssage en str'
-    >>> error = ReliurePlayError(u"un méssage en str")
+    >>> error = ReliurePlayError("an error message")
     >>> error.msg
-    u'un m\\xe9ssage en str'
-    >>> type(str(error))
-    <type 'str'>
-    >>> str(error)
-    'un m\\xc3\\xa9ssage en str'
-
+    'an error message'
     """
     #TODO: manage i18n
     def __init__(self, msg):
         """
         :param msg: the message for the user
         """
-        if isinstance(msg, str):
+        if six.PY2 and isinstance(msg, str):
            msg = msg.decode("utf8")
-        assert isinstance(msg, unicode)
         self.msg = msg
 
     def __str__(self):
-        return self.msg.encode("utf8")
+        if six.PY2:
+            return self.msg.encode("utf8")
+        return self.msg
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, str(self))
@@ -63,7 +49,7 @@ class ValidationError(ReliureTypeError):
     
     >>> from reliure.utils.i18n import _
     >>> error = ValidationError(_("a message with a value : %(value)s"), {'value': 42})
-    >>> for err in error: print err
+    >>> for err in error: print(err)
     a message with a value : 42
 
     """

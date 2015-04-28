@@ -42,7 +42,7 @@ For that we have this two components, that we pipe:
 >>> @Composable
 ... def print_ulrs(docs):
 ...     for doc in docs:
-...         print doc["url"]
+...         print(doc["url"])
 ...         yield doc
 >>>
 >>> pipeline = doc_analyse | print_ulrs

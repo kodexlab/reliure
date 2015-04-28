@@ -4,18 +4,21 @@
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  help    prints this help"
-	@echo "  doc     build doc + tests"
-	@echo "  test    runs unit tests"
-	@echo "  testlib runs doctests on lib only"
-	@echo "  testall runs all tests doc+rst"
-	@echo "  testcov runs coverage unit tests"
-	@echo "          $ py.test --cov PATH_OR_FILE --cov-report term-missing"
+	@echo "  help           prints this help"
+	@echo "  doc            build doc after tests run"
+	@echo "  doc-notest     build doc without testing it"
+	@echo "  test           runs unit tests"
+	@echo "  testlib        runs doctests on lib only"
+	@echo "  testall        runs all tests doc+rst"
+	@echo "  testcov        runs coverage unit tests"
 
 clean-doc:
 	rm -rf docs/_build/ docs/_templates/
 
-doc: testlib testdoc
+doc: testall
+	make -C ./docs html
+
+doc-notest: 
 	make -C ./docs html
 
 publish-doc:

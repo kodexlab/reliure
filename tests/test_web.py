@@ -1,5 +1,6 @@
 #-*- coding:utf-8 -*-
 import unittest
+from pprint import pprint
 
 import json
 from flask import Flask, request 
@@ -49,42 +50,29 @@ class TestReliureAPISimple(unittest.TestCase):
 
     def test_routes(self):
         resp = self.app.get('api/')
-        data = json.loads(resp.data)
-        assert data == {
-            u'api': u'api',
-            u'routes': [
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.egn_options_OLD',
-                    u'path': u'/api/egn/options'
-                },
-                {
-                    u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.egn_OLD',
-                    u'path': u'/api/egn/play'
-                },
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.egn_options',
-                    u'path': u'/api/egn'
-                },
-                {
-                    u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.egn',
-                    u'path': u'/api/egn'
-                },
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.routes',
-                    u'path': u'/api/'
-                }
-            ],
-            u'url_root': u'http://localhost/'
-        }
+        data = json.loads(resp.data.decode("utf-8"))
+        assert data["api"] == "api"
+        assert data["url_root"] == "http://localhost/"
+        # test routes
+        routes = data["routes"]
+        routes = {route['name']: route for route in routes}
+        pprint(routes)
+        # routes GET api/ for this entry point
+        assert "api.routes" in routes
+        assert routes["api.routes"]["path"] == u'/api/'
+        assert sorted(routes["api.routes"]["methods"]) == [u'GET', u'HEAD', u'OPTIONS']
+        # routes GET api/egn for options
+        assert "api.egn_options" in routes
+        assert routes["api.egn_options"]["path"] == u'/api/egn'
+        assert sorted(routes["api.egn_options"]["methods"]) == [u'GET', u'HEAD', u'OPTIONS']
+        # routes POST api/egn for play
+        assert "api.egn" in routes
+        assert routes["api.egn"]["path"] == u'/api/egn'
+        assert sorted(routes["api.egn"]["methods"]) == [u'OPTIONS', u'POST']
 
     def test_options(self):
         resp = self.app.get('api/egn')
-        data = json.loads(resp.data)
+        data = json.loads(resp.data.decode("utf-8"))
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
         assert data["args"] == ["in"]
@@ -96,7 +84,7 @@ class TestReliureAPISimple(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/egn', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -110,7 +98,7 @@ class TestReliureAPISimple(unittest.TestCase):
         resp = self.app.post('api/egn', data=data)
 
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -132,7 +120,7 @@ class TestReliureAPISimple(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/egn', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -171,42 +159,27 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
 
     def test_routes(self):
         resp = self.app.get('api/')
-        data = json.loads(resp.data)
-        assert data == {
-            u'api': u'api',
-            u'routes': [
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.my_egn_options_OLD',
-                    u'path': u'/api/my_egn/options'
-                },
-                {
-                    u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.my_egn_OLD',
-                    u'path': u'/api/my_egn/play'
-                },
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.my_egn_options',
-                    u'path': u'/api/my_egn'
-                },
-                {
-                    u'methods': [u'POST', u'OPTIONS'],
-                    u'name': u'api.my_egn',
-                    u'path': u'/api/my_egn'
-                },
-                {
-                    u'methods': [u'HEAD', u'OPTIONS', u'GET'],
-                    u'name': u'api.routes',
-                    u'path': u'/api/'
-                }
-            ],
-            u'url_root': u'http://localhost/'
-        }
+        data = json.loads(resp.data.decode("utf-8"))
+        # test routes
+        routes = data["routes"]
+        routes = {route['name']: route for route in routes}
+        pprint(routes)
+        # routes GET api/ for this entry point
+        assert "api.routes" in routes
+        assert routes["api.routes"]["path"] == u'/api/'
+        assert sorted(routes["api.routes"]["methods"]) == [u'GET', u'HEAD', u'OPTIONS']
+        # routes GET api/egn for options
+        assert "api.my_egn_options" in routes
+        assert routes["api.my_egn_options"]["path"] == u'/api/my_egn'
+        assert sorted(routes["api.my_egn_options"]["methods"]) == [u'GET', u'HEAD', u'OPTIONS']
+        # routes POST api/egn for play
+        assert "api.my_egn" in routes
+        assert routes["api.my_egn"]["path"] == u'/api/my_egn'
+        assert sorted(routes["api.my_egn"]["methods"]) == [u'OPTIONS', u'POST']
 
     def test_options(self):
         resp = self.app.get('api/my_egn')
-        data = json.loads(resp.data)
+        data = json.loads(resp.data.decode("utf-8"))
         # check we have the same than in engine
         assert data["blocks"] == self.engine.as_dict()["blocks"]
         assert data["args"] == ["in", "middle"]
@@ -224,7 +197,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -242,7 +215,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/my_egn', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -283,7 +256,7 @@ class TestReliureAPIWithBlock(unittest.TestCase):
 
     def test_options(self):
         resp = self.app.get('api/op2')
-        data = json.loads(resp.data)
+        data = json.loads(resp.data.decode("utf-8"))
         # check we have the same than in engine
         assert data["components"] == self.engine.op2.as_dict()["components"]
         assert data["args"] == ["middle"]
@@ -299,7 +272,7 @@ class TestReliureAPIWithBlock(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/op2', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -327,8 +300,8 @@ class TestComponentView(unittest.TestCase):
 
     def test_options(self):
         resp = self.app.get('api/mult_opt')
-        data = json.loads(resp.data)
-        print data
+        data = json.loads(resp.data.decode("utf-8"))
+        print(data)
         # check we have the same than in engine
         assert data == {
             u'required': True,
@@ -376,7 +349,7 @@ class TestComponentView(unittest.TestCase):
         json_data = json.dumps(rdata)
         resp = self.app.post('api/mult_opt', data=json_data, content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]
@@ -385,7 +358,7 @@ class TestComponentView(unittest.TestCase):
     def test_play_short(self):
         resp = self.app.get('api/mult_opt/n/33', content_type='application/json')
         # load the results
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode("utf-8"))
         # check it
         assert "results" in resp_data
         results = resp_data["results"]

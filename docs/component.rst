@@ -91,7 +91,7 @@ An other key feature of reliure is to have :class:`reliure.Optionable` component
 16
 >>> my_processing(2, pow=-2)
 Traceback (most recent call last):
-ValidationError: [u'Ensure this value ("-2") is greater than or equal to 0.']
+reliure.exceptions.ValidationError: ['Ensure this value ("-2") is greater than or equal to 0.']
 >>> 2
 2
 
