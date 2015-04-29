@@ -16,10 +16,25 @@ Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/l
 Summary of requirements
 ======================
 
+Reliure work with python 2 and python 3. Note however that doctest (in source
+files and in documentation .rst) only work with python 3.
+
+Reliure depends only on:
+* flask, for API mechanism
+* requests, for API clients
+* graphviz, for engine schema generation
+
+All this deps may be installed with:
+
+    $ pip install -r requirements.txt
+
+To develop reliure you will also need:
 * py.test for testing
 * sphinx for documenation
 
-See requirements.txt or a full list of python packages dep
+Dev dependances may be installed with:
+
+    $ pip install -r requirements.dev.txt
 
 Contribute
 ==========
@@ -29,16 +44,14 @@ Contribute
     $ virtualenv ENV
     $ source ENV/bin/activate
     $ pip install -r requirements.txt
+    $ pip install -r requirements.dev.txt
 
 To run tests:
 
-    $ pip install -I pytest
     $ make testall
 
 To build the doc:
 
-    $ pip install -I sphinx
-    $ pip install -I sphinx_rtd_theme
     $ make doc
 
 then open: docs/_build/html/index.html
