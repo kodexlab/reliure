@@ -1,26 +1,25 @@
-Reliure is a minimal and basic framework to manage pipeline of data processing
+# reliure: minimal framework for data processing
+
+`reliure` is a minimal and basic framework to manage pipeline of data processing
 components in Python.
 
 
-Install
-======
+## Install
 
     $ pip install reliure
 
-License
-=======
+## License
 
-Reliure source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
+`reliure` source code is available under the [LGPL Version 3](http://www.gnu.org/licenses/lgpl.txt) license, unless otherwise indicated.
 
 
-Summary of requirements
-======================
+## Summary of requirements
 
-Reliure work with python 2 and python 3. Note however that doctest (in source
-files and in documentation .rst) only work with python 3.
+`reliure` works with python 2 and python 3. Note however that doctest (in source
+files and in documentation .rst) only works with python 3.
 
-Reliure depends only on:
-* flask, for API mechanism
+`reliure` depends only on:
+* flask, for web API mechanism
 * requests, for API clients
 * graphviz, for engine schema generation
 
@@ -36,8 +35,8 @@ Dev dependances may be installed with:
 
     $ pip install -r requirements.dev.txt
 
-Contribute
-==========
+
+## Contribute
 
     $ # Clone it
     $ cd reliure
