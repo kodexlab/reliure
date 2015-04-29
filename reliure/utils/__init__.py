@@ -71,57 +71,57 @@ def deprecated(new_fct_name, logger=None):
     return aux_deprecated
 
 
-def engine_schema(engine, out_names=None):
+def engine_schema(engine, out_names=None, filename=None, format="pdf"):
     """ Build a graphviz schema of a reliure :class:`.Engine`.
     
-    It depends on `pygraphviz <http://pygraphviz.github.io/>`_.
+    It depends on `graphviz <https://pypi.python.org/pypi/graphviz>`_.
 
-    :param engine: The reliure engine to graph
+    :param engine: reliure engine to graph
     :type engine: :class:`.Engine`
     :param out_names: list of block output to consider as engine output (all by default)
+    :param filename: output filename, create the file if given
+    :param formal: output file formal (pdf, svg, png, ...)
 
     >>> from reliure.engine import Engine
     >>> egn = Engine("preproc", "proc1", "proc2")
     >>> egn.preproc.setup(in_name="input", out_name="data")
     >>> egn.proc1.setup(in_name="data", out_name="gold_data")
     >>> egn.proc2.setup(in_name="input", out_name="silver_data")
-    >>> # you can create 
-    >>> schema = engine_schema(egn)
-    >>> schema.draw('docs/img/engine_schema.png', prog='dot')
+    >>> # you can create
+    >>> schema = engine_schema(egn, filename='docs/img/engine_schema', format='png')
 
     it create the following image :
 
     .. image:: /../_static/engine_schema.png
 
-    You can spécify which block output will be consider as engine output:
+    You can specify which block output will be consider as engine output:
 
-    >>> schema = engine_schema(egn, ["gold_data", "silver_data"])
-    >>> schema.draw('docs/img/engine_schema_simple.png', prog='dot')
+    >>> schema = engine_schema(egn, ["gold_data", "silver_data"], filename='docs/img/engine_schema_simple', format='png')
 
     .. image:: /../_static/engine_schema_simple.png
 
     Note that it is also possible to draw a pdf;
 
-    >>> schema.draw('docs/img/engine_schema.pdf', prog='dot')
+    >>> schema = engine_schema(egn, ["gold_data", "silver_data"], filename='docs/img/engine_schema_simple', format='pdf')
     """
-    import pygraphviz as pgv
+    import graphviz as pgv
     #engine.validate()
-    dg = pgv.AGraph(strict=False, directed=True)
+    dg = pgv.Digraph(format=format)
     input_node_name = "in"
     output_node_name = "out"
-    dg.add_node(input_node_name, label=input_node_name, shape="ellipse")
+    dg.node(input_node_name, label=input_node_name, shape="ellipse")
     block_source = {} # witch block is the source for witch data
     for e_in_name in engine.in_name:
         block_source[e_in_name] = input_node_name
     # creation des sommets
     for block in engine:
-        dg.add_node(block.name, label=' %s ' % block.name, shape="box")
+        dg.node(block.name, label=' %s ' % block.name, shape="box")
     # creation des liens
     for block in engine:
         for in_name in block.in_name:
-            dg.add_edge(block_source[in_name], block.name,
+            dg.edge(block_source[in_name], block.name,
                 label=" %s " % in_name,
-                fontsize=10,
+                #fontsize=10,
             )
         block_source[block.out_name] = block.name
     
@@ -129,13 +129,15 @@ def engine_schema(engine, out_names=None):
         out_names = set([block.out_name for block in engine])
     
     if len(out_names):
-        dg.add_node(output_node_name, label=' %s ' % output_node_name, shape="ellipse")
+        dg.node(output_node_name, label=' %s ' % output_node_name, shape="ellipse")
         for out_name in out_names:
             if out_name not in block_source:
                 raise ValueError("'%s' is not a generated data" % out_name)
-            dg.add_edge(block_source[out_name], output_node_name,
+            dg.edge(block_source[out_name], output_node_name,
                 label=" %s " % out_name,
-                fontsize=10,
+                #fontsize=10,
             )
+    if filename:
+        dg.render(filename)
     return dg
 

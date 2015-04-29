@@ -1,6 +1,3 @@
-pytest
-pytest-cov
-Sphinx
 requests
 flask
-pygraphviz
+graphviz
