@@ -1,4 +1,3 @@
-******************
 HTTP/Json API
 ******************
 
@@ -96,19 +95,19 @@ To illustrate API call, let's use Flask testing mechanism:
 {'count_a_and_b': 3}
 >>> 
 >>> resp = client.get("/api/count_ab/abcdea__bb_aaa")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> pprint(results["results"])
 {'count_a_and_b': 8}
 
 Note that meta information is also available:
 
 >>> pprint(results["meta"])         #doctest: +SKIP
-{'details': [{u'errors': [],
-               u'name': 'count_a_and_b',
-               u'time': 3.314018249511719e-05,
-               u'warnings': []}],
+{'details': [{'errors': [],
+              'name': 'count_a_and_b',
+              'time': 3.314018249511719e-05,
+              'warnings': []}],
  'errors': [],
- 'name': u'count_a_and_b:[count_a_and_b]',
+ 'name': 'count_a_and_b:[count_a_and_b]',
  'time': 3.314018249511719e-05,
  'warnings': []}
 
@@ -204,41 +203,41 @@ Finaly, just use it !
 And then we can use it:
 
 >>> resp = client.get("/api/merge/aaa/bbb")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'aaabbb'}
+{'merge': 'aaabbb'}
 
 
 As we have specify a route that require only one argument, and a default value
 for this second input (``in_rgh``), it is also possible to do:
 
 >>> resp = client.get("/api/merge/aaa")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'aaaddd'}
+{'merge': 'aaaddd'}
 
 It is also possible to call the API with options:
 
 >>> resp = client.get("/api/merge/aaa/bbb?method=altern")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'ababab'}
+{'merge': 'ababab'}
 
 Alternatively you can use a POST to send inputs.
 There is two posibility to provide inputs and options.
 First by using direct form encoding:
 
 >>> resp = client.post("/api/merge", data={"in_lft":"ee", "in_rgh":"hhhh"})
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'eehhhh'}
+{'merge': 'eehhhh'}
 
 And with options in the url:
 
 >>> resp = client.post("/api/merge?method=altern", data={"in_lft":"ee", "in_rgh":"hhhh"})
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'eheh'}
+{'merge': 'eheh'}
 
 The second option is to use a json payload:
 
@@ -255,35 +254,35 @@ The second option is to use a json payload:
 >>> json_data = json.dumps(data)
 >>> resp = client.post("/api/merge", data=json_data, content_type='application/json')
 >>> # note that it is important to specify content_type to 'application/json'
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> results["results"]
-{u'merge': u'egeg'}
+{'merge': 'egeg'}
 
 
 Note that a GET call on the root ``/api/merge`` returns a json that specify
 the API. With this, it is possible do list all the options of the component:
 
 >>> resp = client.get("/api/merge")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> pprint(results)
-{u'args': [u'in_lft', u'in_rgh'],
- u'components': [{u'default': True,
-                  u'name': u'StringMerge',
-                  u'options': [{u'name': u'method',
-                                u'otype': {u'choices': [u'concat',
-                                                        u'altern'],
-                                           u'default': u'concat',
-                                           u'help': u'How to merge the inputs',
-                                           u'multi': False,
-                                           u'type': u'Text',
-                                           u'uniq': False,
-                                           u'vtype': u'unicode'},
-                                u'type': u'value',
-                                u'value': u'concat'}]}],
- u'multiple': False,
- u'name': u'StringMerge',
- u'required': True,
- u'returns': [u'merge']}
+{'args': ['in_lft', 'in_rgh'],
+ 'components': [{'default': True,
+                 'name': 'StringMerge',
+                 'options': [{'name': 'method',
+                              'otype': {'choices': ['concat', 'altern'],
+                                        'default': 'concat',
+                                        'encoding': 'utf8',
+                                        'help': 'How to merge the inputs',
+                                        'multi': False,
+                                        'type': 'Text',
+                                        'uniq': False,
+                                        'vtype': 'unicode'},
+                              'type': 'value',
+                              'value': 'concat'}]}],
+ 'multiple': False,
+ 'name': 'StringMerge',
+ 'required': True,
+ 'returns': ['merge']}
 
 
 
@@ -337,8 +336,7 @@ The Figure :ref:`engine-schema` draw the processing schema of this small engine.
         :hide:
 
         >>> from reliure.utils import engine_schema
-        >>> schema = engine_schema(engine, ["merge"])
-        >>> schema.draw('docs/img/engine_schema_vowel_consonent.png', prog='dot')
+        >>> sch = engine_schema(engine, out_names=["merge"], filename='docs/img/engine_schema_vowel_consonent', format='png')
 
 
 Create a view and register it on your api
@@ -383,44 +381,44 @@ Use it !
 ===========
 
 >>> resp = client.get("/api/process/abcdea")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> pprint(results["results"])
-{u'merge': u'aeabcd'}
+{'merge': 'aeabcd'}
 >>> 
 >>> resp = client.get("/api/process/abcdea__bb_aaa")
->>> results = json.loads(resp.data)
+>>> results = json.loads(resp.data.decode("utf-8"))
 >>> pprint(results["results"])
-{u'merge': u'aeaaaabcd__bb_'}
+{'merge': 'aeaaaabcd__bb_'}
 
 Note that meta information is also available:
 
 >>> pprint(results["meta"])     # doctest: +SKIP
-    {u'details': [{u'details': [{u'errors': [],
-                                 u'name': u'extract_vowel',
-                                 u'time': 3.695487976074219e-05,
-                                 u'warnings': []}],
-                   u'errors': [],
-                   u'name': u'vowel:[extract_vowel]',
-                   u'time': 3.695487976074219e-05,
-                   u'warnings': []},
-                  {u'details': [{u'errors': [],
-                                 u'name': u'extract_consonant',
-                                 u'time': 3.0040740966796875e-05,
-                                 u'warnings': []}],
-                   u'errors': [],
-                   u'name': u'consonant:[extract_consonant]',
-                   u'time': 3.0040740966796875e-05,
-                   u'warnings': []},
-                  {u'details': [{u'errors': [],
-                                 u'name': u'StringMerge',
-                                 u'time': 5.507469177246094e-05,
-                                 u'warnings': []}],
-                   u'errors': [],
-                   u'name': u'concat:[StringMerge]',
-                   u'time': 5.507469177246094e-05,
-                   u'warnings': []}],
-     u'errors': [],
-     u'name': u'engine:[vowel:[extract_vowel], consonant:[extract_consonant], concat:[StringMerge]]',
-     u'time': 0.0001220703125,
-     u'warnings': []}
+    {'details': [{'details': [{'errors': [],
+                                 'name': 'extract_vowel',
+                                 'time': 3.695487976074219e-05,
+                                 'warnings': []}],
+                   'errors': [],
+                   'name': 'vowel:[extract_vowel]',
+                   'time': 3.695487976074219e-05,
+                   'warnings': []},
+                  {'details': [{'errors': [],
+                                 'name': 'extract_consonant',
+                                 'time': 3.0040740966796875e-05,
+                                 'warnings': []}],
+                   'errors': [],
+                   'name': 'consonant:[extract_consonant]',
+                   'time': 3.0040740966796875e-05,
+                   'warnings': []},
+                  {'details': [{'errors': [],
+                                 'name': 'StringMerge',
+                                 'time': 5.507469177246094e-05,
+                                 'warnings': []}],
+                   'errors': [],
+                   'name': 'concat:[StringMerge]',
+                   'time': 5.507469177246094e-05,
+                   'warnings': []}],
+     'errors': [],
+     'name': 'engine:[vowel:[extract_vowel], consonant:[extract_consonant], concat:[StringMerge]]',
+     'time': 0.0001220703125,
+     'warnings': []}
 

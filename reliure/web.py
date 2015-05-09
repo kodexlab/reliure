@@ -507,8 +507,6 @@ class RemoteApi(Blueprint):
         if request.method == 'GET':
             resp = requests.get(url, params=request.args)
             data = json.loads(resp.content)
-            return jsonify(data)
-            
         elif request.method == 'POST':
             if request.headers['Content-Type'].startswith('application/json'):
                 # data in JSON
@@ -517,9 +515,10 @@ class RemoteApi(Blueprint):
             else :
                 resp = requests.post(url, json=request.form)
                 data = request.form
-    
             data = json.loads(resp.content)
-            return jsonify(data)
-                                
-        # method not allowed aborting
-        abort(405) # XXX
+        else:
+            # method not allowed aborting
+            abort(405) # XXX
+
+        return jsonify(data)
+
