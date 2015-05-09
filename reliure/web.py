@@ -183,7 +183,7 @@ class EngineView(object):
         needed_inputs = self.engine.needed_inputs()
         # add default
         for inname in needed_inputs:
-            print(inname)
+            #print(inname)
             if inname not in inputs_data \
                     and inname in self._inputs \
                     and self._inputs[inname].default is not None:
