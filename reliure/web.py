@@ -290,13 +290,13 @@ class ComponentView(EngineView):
         # update the block inputs names
         self._blk.setup(in_name=self._inputs.keys())
 
-    def add_output(self, out_name, type_or_serialize=None):
+    def add_output(self, out_name, type_or_serialize=None, **kwargs):
         if self._default_out_name:
             self._outputs = OrderedDict()
             self._default_out_name = False
         self._blk.setup(out_name=out_name)
         #XXX: attention il faut interdire les multi output
-        super(ComponentView, self).add_output(out_name, type_or_serialize)
+        super(ComponentView, self).add_output(out_name, type_or_serialize, **kwargs)
 
     def _config_from_url(self):
         """ Manage block configuration from requests.args (url params)
