@@ -111,7 +111,7 @@ class EngineView(object):
                 out_name = output
             self.add_output(out_name, type_or_serialize)
 
-    def add_output(self, out_name, type_or_serialize=None):
+    def add_output(self, out_name, type_or_serialize=None, **kwargs):
         """ Declare an output
         """
         if type_or_serialize is None:
@@ -120,8 +120,11 @@ class EngineView(object):
             type_or_serialize = GenericType(serialize=type_or_serialize)
         elif not isinstance(type_or_serialize, GenericType):
             raise ValueError("the given 'type_or_serialize' is invalid")
-        self._outputs[out_name] = type_or_serialize
 
+        self._outputs[out_name] = { 'serializer': type_or_serialize,
+                                    'parameters'   : kwargs if kwargs else {}    
+                                  }
+                                  
     def play_route(self, *routes):
         """ Define routes for GET play.
         
@@ -222,10 +225,11 @@ class EngineView(object):
             for out_name, raw_out in raw_res.iteritems():
                 if out_name not in self._outputs:
                     continue
-                serializer = self._outputs[out_name].serialize
+                serializer = self._outputs[out_name]['serializer']
+                params = self._outputs[out_name].get('parameters', {})
                 # serialise output
                 if serializer is not None:
-                    results[out_name] = serializer(raw_res[out_name])
+                    results[out_name] = serializer.serialize(raw_res[out_name], **params)
                 else:
                     results[out_name] = raw_res[out_name]
         ### prepare the retourning json

@@ -128,10 +128,10 @@ class GenericType(object):
         else:
             return value
 
-    def serialize(self, value):
+    def serialize(self, value, **kwargs):
         """ pre-serialize value """
         if self._serialize is not None:
-            return self._serialize(value)
+            return self._serialize(value, **kwargs)
         else:
             return value
 
