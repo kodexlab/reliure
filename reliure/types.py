@@ -236,7 +236,8 @@ class Boolean(GenericType):
         super(Boolean, self).__init__(**kwargs)
 
     def parse(self, value):
-        value = value.lower()
+        if type(value) == unicode:
+            value = value.lower()
         return value in Boolean.TRUE_VALUES
 
 
