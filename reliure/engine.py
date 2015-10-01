@@ -675,7 +675,7 @@ class Block(object):
             except Exception as err:
                 # component error handling
                 comp_meta_res.add_error(err)
-                self._logger.error("error in component '%s': %s\n%s" % (comp.name, err.message, traceback.format_exc()))
+                self._logger.error("error in component '%s': %s\n%s" % (comp.name, str(err), traceback.format_exc()))
                 if _break_on_error:
                     raise
             finally:
