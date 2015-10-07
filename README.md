@@ -3,6 +3,9 @@
 `reliure` is a minimal and basic framework to manage pipeline of data processing
 components in Python.
 
+## Documentation
+
+Documentation is available on [ReadTheDoc](http://reliure.readthedocs.org).
 
 ## Install
 

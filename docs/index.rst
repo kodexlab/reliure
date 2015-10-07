@@ -24,7 +24,9 @@ Reliure source code is available under the `LGPL Version 3`_ license, unless oth
 Get the source
 #########################
 
-TODO
+The source if available on `Github <https://github.com/kodexlab/reliure>`_. You can clone the last version this way::
+
+    $ git clone https://github.com/kodexlab/reliure
 
 
 Indices and tables
