@@ -15,10 +15,9 @@ components in Python.
 
 ## Summary of requirements
 
-`reliure` works with python 2 and python 3. Note however that doctest (in source
-files and in documentation .rst) only works with python 3.
+`reliure` works with both python 2 and python 3.
 
-`reliure` depends only on:
+`reliure` depends on:
 * flask, for web API mechanism
 * requests, for API clients
 * graphviz, for engine schema generation

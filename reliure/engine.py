@@ -105,8 +105,8 @@ class BasicPlayMeta(object):
         ...     # store the exception if any
         ...     meta.add_error(error)
         >>> from pprint import pprint
-        >>> pprint(meta.as_dict())
-        {'errors': ['division by zero'],
+        >>> pprint(meta.as_dict())                           # doctest:+ELLIPSIS
+        {'errors': ['...division ...by zero'],
          'name': 'TheComp',
          'time': 0.0,
          'warnings': []}
@@ -892,14 +892,14 @@ class Engine(object):
         >>> engine.op1.append(lambda x:x+2)
         >>> engine.op2.append(lambda x:x*2)
         >>> engine.op1.select('<lambda>')
-        >>> engine.needed_inputs()
-        {'in'}
+        >>> list(engine.needed_inputs())
+        ['in']
 
         But now if we unactivate the first component:
 
         >>> engine.op1.clear_selections()
-        >>> engine.needed_inputs()
-        {'middle'}
+        >>> list(engine.needed_inputs())
+        ['middle']
 
         More complex example:
 
@@ -916,8 +916,8 @@ class Engine(object):
         >>> engine = Engine("op1", "op2")
         >>> engine.op1.append(lambda x:x+2)
         >>> engine.op2.append(lambda x:x*2)
-        >>> engine.needed_inputs()
-        {'input'}
+        >>> list(engine.needed_inputs())
+        ['input']
         """
         needed = set()
         available = set()       # set of available data
