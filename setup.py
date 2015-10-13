@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 import os
 from setuptools import setup, find_packages
-from reliure import __version__
 
 cwd = os.path.abspath(os.path.dirname(__file__))
 readme = open(os.path.join(cwd, 'README.md')).read()
 
 setup(
     name='reliure',
-    version=__version__,
+    version='0.1.0',
     description="Minimal framework to manage data processing pipelines",
     long_description=readme,
     author='KodexLab',
@@ -26,5 +25,6 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Software Development :: Libraries :: Application Frameworks",
     ],
+    install_requires=['six'],
 )
 
