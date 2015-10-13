@@ -2,14 +2,11 @@
 Reliure documentation
 ***************************
 
-Reliure is a minimal and basic framework to manage pipeline of data processing
-components in Python.
+Welcome on ``reliure`` documenation. Just after the table of contents are
+presented basic information on ``reliure``.
 
-
-Reliure source code is available under the `LGPL Version 3`_ license, unless otherwise indicated.
-
-.. _LGPL Version 3: http://www.gnu.org/licenses/lgpl.txt
-
+Contents
+========
 
 .. toctree:: `Table of contents`
     :maxdepth: 2
@@ -20,13 +17,7 @@ Reliure source code is available under the `LGPL Version 3`_ license, unless oth
     offline
     api/api
 
-
-Get the source
-#########################
-
-The source if available on `Github <https://github.com/kodexlab/reliure>`_. You can clone the last version this way::
-
-    $ git clone https://github.com/kodexlab/reliure
+.. include:: ../README.rst
 
 
 Indices and tables
