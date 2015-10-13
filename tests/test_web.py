@@ -1,5 +1,7 @@
 #-*- coding:utf-8 -*-
 import unittest
+import pytest
+
 from pprint import pprint
 
 import json
@@ -47,6 +49,11 @@ class TestReliureAPISimple(unittest.TestCase):
         app.config['TESTING'] = True
         app.register_blueprint(api, url_prefix="/api")
         self.app = app.test_client()
+
+    def test_engine_view_init(self):
+        _egn_view = EngineView(self.engine)
+        with pytest.raises(ValueError):
+            _egn_view.add_output("existe_pas")
 
     def test_routes(self):
         resp = self.app.get('api/')
@@ -145,6 +152,7 @@ class TestReliureAPIMultiInputs(unittest.TestCase):
         egn_view = EngineView(self.engine, name="my_egn")
         egn_view.add_input("in", Numeric(vtype=int, min=-5, max=5))
         egn_view.add_input("middle", Numeric(vtype=int))
+        print(self.engine.needed_inputs())
         egn_view.add_output("in")
         egn_view.add_output("middle")
         egn_view.add_output("out")

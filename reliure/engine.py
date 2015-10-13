@@ -330,6 +330,12 @@ class Block(object):
         """
         return self.in_name
 
+    def all_outputs(self):
+        """ Returns a set of outputs name
+        """
+        outputs = set([self.out_name])
+        return outputs
+
     @property
     def defaults(self):
         """ component default component
@@ -934,6 +940,39 @@ class Engine(object):
             # register the output
             available.add(block.out_name)
         return needed
+
+    def all_outputs(self):
+        """ Returns a list of all engine possible outputs (note that inputs are
+        also possible inputs)
+
+        >>> engine = Engine("op1", "op2")
+        >>> engine.op1.setup(in_name="in", out_name="middle", required=False)
+        >>> engine.op2.setup(in_name="middle", out_name="out")
+        >>> sorted(list(engine.all_outputs()))
+        ['in', 'middle', 'out']
+
+        More complex example:
+
+        >>> engine = Engine("op1", "op2")
+        >>> engine.op1.setup(in_name="in", out_name="middle")
+        >>> engine.op2.setup(in_name=["middle", "in2"], out_name="out")
+        >>> sorted(list(engine.all_outputs()))
+        ['in', 'in2', 'middle', 'out']
+
+        Note that by default the needed input is 'input':
+        
+        >>> engine = Engine("op1", "op2")
+        >>> engine.op1.append(lambda x:x+2)
+        >>> engine.op2.append(lambda x:x*2)
+        >>> sorted(list(engine.all_outputs()))
+        ['input', 'op1', 'op2']
+
+        """
+        outputs = set()
+        for block in self:
+            outputs.update(block.in_name or [Engine.DEFAULT_IN_NAME])
+            outputs.update(block.all_outputs())
+        return outputs
 
     def play(self, *inputs, **named_inputs):
         """ Run the engine (that should have been configured first)
