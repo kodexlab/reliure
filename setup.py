@@ -4,7 +4,7 @@ import os
 from setuptools import setup, find_packages
 
 cwd = os.path.abspath(os.path.dirname(__file__))
-readme = open(os.path.join(cwd, 'README.md')).read()
+readme = open(os.path.join(cwd, 'README.rst')).read()
 
 setup(
     name='reliure',
