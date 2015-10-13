@@ -15,7 +15,7 @@ help:
 clean-doc:
 	rm -rf docs/_build/ docs/_templates/
 
-doc: testall
+doc: testdoc
 	make -C ./docs html
 
 doc-notest: 
