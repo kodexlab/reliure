@@ -41,8 +41,7 @@ class Option(object):
             raise NotImplementedError("for otype, options can't have attributs")
             #return VectorField(ftype)
         elif otype.uniq:
-            raise NotImplementedError("for now, options can't be set of values")
-            #return SetField(ftype)
+            return SetOption(name, otype)
         elif otype.multi:
             #XXX: dbl check needed?
             #raise NotImplementedError("for now, options can't have multiple values")
@@ -175,6 +174,19 @@ class ListOption(Option):
 
     def parse(self, values):
         return [self.otype.parse(value) for value in values]
+
+        
+class SetOption(Option):
+    """ option with multiple value
+    """
+
+    def validate(self, values):
+        return set([self.otype.validate(value) for value in values])
+
+    def parse(self, values):
+        return [self.otype.parse(value) for value in values]
+
+        
 
 class ValueOption(Option):
     """ Single value option
