@@ -8,7 +8,7 @@ readme = open(os.path.join(cwd, 'README.rst')).read()
 
 setup(
     name='reliure',
-    version='0.1.0',
+    version='15.10.r0',
     description="Minimal framework to manage data processing pipelines",
     long_description=readme,
     author='KodexLab',
