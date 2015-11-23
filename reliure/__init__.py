@@ -3,6 +3,6 @@
 =================
 """
 __version__ = '15.10'
-__all__ = ['Composable', 'Optionable']
+__all__ = ['Composable', 'Optionable', 'Map']
 
-from reliure.pipeline import Composable, Optionable
+from reliure.pipeline import Composable, Optionable, Map

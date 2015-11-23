@@ -510,6 +510,34 @@ class Pipeline(OptionableSequence):
         return args[0] # expect only one output XXX
 
 
+class Map(OptionableSequence):
+    """ Apply a composable to each element of an generator like input.
+    
+    >>> item_process = Composable(lambda x: x+2) | Composable(lambda x: x if x > 3 else 0)
+    >>> flux_process = Map(item_process)
+    >>>
+    >>> inputs = xrange(5)
+    >>> [e for e in flux_process(inputs)]
+    [0, 0, 4, 5, 6]
+    """
+    def __init__(self, comp, as_list=False):
+        super(Map, self).__init__(comp)
+        self.comp = comp
+        self.as_list = as_list
+        #TODO: add ce qu'il faut pour cloner les options de comp
+
+    @Optionable.check
+    def __call__(self, inputs, **kwargs):
+        if self.as_list:
+            return list(self._apply(inputs, **kwargs))
+        else:
+            return self._apply(inputs, **kwargs)
+
+    def _apply(self, inputs,  **kwargs):
+        for val in inputs:
+           yield self.comp(val, **kwargs)
+
+
 class MapSeq(OptionableSequence):
     """ Map implentation for components
     
