@@ -6,6 +6,7 @@
 
     >>> from pprint import pprint
     >>> import json
+    >>> from reliure import Optionable
 
 ******************
 Offline processing
@@ -68,8 +69,48 @@ instead of :func:`run`:
 >>> res = run_parallel(pipeline, documents, ncpu=2, chunksize=5)
 
 Command line interface
-###########################
+#########################
 
-TODO
+:mod:`.reliure.utils.cli` provides some helper to create or populate
+`argument parser <https://docs.python.org/3/library/argparse.html>`_ from Optionable.
+Let's look at a simple exemple.
 
-see :mod:`.reliure.utils.cli`
+First you have an Optionable component with an option:
+
+>>> class PowerBy(Optionable):
+...    def __init__(self):
+...        super(PowerBy, self).__init__("testOptionableName")
+...        self.add_option("alpha", Numeric(default=4, min=1, max=20,
+...                        help='power exponent'))
+...
+...    @Optionable.check
+...    def __call__(self, value, alpha=None):
+...        return value**alpha
+>>>
+
+Note that it could aslo be a pipeline of components.
+
+Next you want to build a script with a `__main__` and you want to map your
+component options to script option using `argparse`. Here is how to do
+(file `reliure_cli.py`:
+
+.. literalinclude:: examples/reliure_cli.py
+
+With that you will have a nice doc generated:
+
+.. code-block:: shell
+
+    $ python reliure_cli.py -h
+    usage: reliure_cli.py [-h] [--power_alpha POWER_ALPHA] INPUT
+
+    positional arguments:
+      INPUT                 the number to process !
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --power_alpha POWER_ALPHA
+                            power exponent
+
+    $ python reliure_cli.py --power_alpha 3 3
+    27
+
