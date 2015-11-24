@@ -5,7 +5,9 @@ from datetime import datetime
 
 from reliure.exceptions import ValidationError
 from reliure.types import GenericType, Numeric, Text, Boolean
-from reliure.pipeline import Composable, Optionable, OptionableSequence, Pipeline
+from reliure.pipeline import Composable, Optionable
+from reliure.pipeline import OptionableSequence, Pipeline
+from reliure.pipeline import Map
 
 
 class TestComposable(unittest.TestCase):
@@ -38,6 +40,7 @@ class MyOptionable(Optionable):
     @Optionable.check
     def __call__(self, alpha=None, name=None):
         return alpha, name
+
 
 # this should work without a check BUT should be avoided
 class MyOptionableNoCheck(Optionable):
@@ -193,6 +196,7 @@ class TestOptionable(unittest.TestCase):
         with self.assertRaises(ValueError):
             comp.set_option_value("filtering", True)
 
+
 class TestOptionableSequence(unittest.TestCase):
     def testNoOptions(self):
         def f1(x):
@@ -289,3 +293,25 @@ class TestOptionableSequence(unittest.TestCase):
                 }
             ]
         )
+
+
+class PowerBy(Optionable):
+    def __init__(self):
+        super(PowerBy, self).__init__("testOptionableName")
+        self.add_option("alpha", Numeric(default=4, min=1, max=20))
+
+    @Optionable.check
+    def __call__(self, value, alpha=None):
+        return value**alpha
+
+
+def testMap():
+    """ Test Map component
+    """
+    process = Map(PowerBy())
+    values = list(process(range(10), alpha=2))
+    assert values == [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+    values = list(process(range(5), alpha=3))
+    assert values == [0, 1, 8, 27, 64]
+

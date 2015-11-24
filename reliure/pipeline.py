@@ -519,6 +519,7 @@ class Map(OptionableSequence):
     >>> inputs = xrange(5)
     >>> [e for e in flux_process(inputs)]
     [0, 0, 4, 5, 6]
+
     """
     def __init__(self, comp, as_list=False):
         super(Map, self).__init__(comp)
