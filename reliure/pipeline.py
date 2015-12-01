@@ -470,7 +470,12 @@ class OptionableSequence(Optionable):
             item.set_options_values(kwargs, strict=False, parse=False)
             item_kwargs = item.get_options_values()
         self._logger.debug("calling %s '%s' with %s", item, item_name, item_kwargs)
-        return item(*args, **item_kwargs)
+        try:
+            res = item(*args, **item_kwargs)
+        except Exception:
+            self._logger.error("error in component '%s'" % (item.name))
+            raise
+        return res
 
 
 class Pipeline(OptionableSequence):
