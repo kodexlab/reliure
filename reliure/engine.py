@@ -648,7 +648,7 @@ class Block(object):
 
             # some logging
             argstr = [repr(arg)[:100].replace('\n', '') for arg in inputs]
-            self._logger.info("""'%s' playing: %s
+            self._logger.debug("""'%s' playing: %s
                 component: %s,
                 args=%s,
                 kwargs=%s""" % (self._name, comp.name, comp, "\n\t\t".join(argstr), options))
