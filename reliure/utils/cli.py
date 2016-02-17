@@ -125,6 +125,8 @@ def get_config_for(args, component, prefix=""):
     config = {}
     vargs = vars(args)
     for option in component.options:
+        if component.options[option].hidden:
+            continue
         config[option] = vargs["%s%s" % (prefix, option)]
     return config
 
