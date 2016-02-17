@@ -165,6 +165,7 @@ class Option(object):
         #TODO: est-ce que l'on ne met pas a plat et les attr de otype et ceux de l'option
         return opt_info
 
+
 class ListOption(Option):
     """ option with multiple value
     """
@@ -175,7 +176,7 @@ class ListOption(Option):
     def parse(self, values):
         return [self.otype.parse(value) for value in values]
 
-        
+
 class SetOption(Option):
     """ option with multiple value
     """
@@ -186,7 +187,6 @@ class SetOption(Option):
     def parse(self, values):
         return [self.otype.parse(value) for value in values]
 
-        
 
 class ValueOption(Option):
     """ Single value option

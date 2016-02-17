@@ -112,6 +112,8 @@ def arguments_from_optionable(parser, component, prefix=""):
     "comp_result"
     """
     for option in component.options:
+        if component.options[option].hidden:
+            continue
         argument_from_option(parser, component, option, prefix=prefix)
 
 
