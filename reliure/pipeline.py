@@ -75,7 +75,7 @@ class Composable(object):
             self.name = self.__class__.__name__
         else:
             self.name = name
-        self._logger = logging.getLogger("reliure.%s" % self.__class__.__name__)
+        self._logger = logging.getLogger("reliure.%s" % self.name)
 
     @property
     def name(self):
