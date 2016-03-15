@@ -149,13 +149,13 @@ class Optionable(Composable):
     def has_option(self, opt_name):
         """ Whether the  component have a given option
         """
-        return opt_name in self._options
+        return opt_name in self.options
 
     def print_options(self):
         """ print description of the component options
         """
         summary = []
-        for opt_name, opt in self._options.items():
+        for opt_name, opt in self.options.items():
             if opt.hidden:
                 continue
             summary.append(opt.summary())
@@ -164,7 +164,7 @@ class Optionable(Composable):
     def option_is_hidden(self, opt_name):
         """ Whether the given option is hidden
         """
-        return self._options[opt_name].hidden
+        return self.options[opt_name].hidden
 
     def set_option_value(self, opt_name, value, parse=False):
         """ Set the value of one option.
@@ -310,7 +310,7 @@ class Optionable(Composable):
         :returns: **ordered** list of options pre-serialised (as_dict)
         :rtype: list `[opt_dict, ...]`
         """
-        return [opt.as_dict() for opt in self._options.values() \
+        return [opt.as_dict() for opt in self.options.values() \
                                             if hidden or (not opt.hidden)]
 
     @staticmethod
@@ -337,17 +337,26 @@ class OptionableSequence(Optionable):
     This object is an Optionable witch as all the options of it composants
     
     """
-    def __init__(self, *composants):
+    def __init__(self, *composants, **kwargs):
+        """ Create a optionable sequence
+
+        :param shared_option: allow two components to share an option, if the two
+        options have the same name (False by default)
+        """
         # Composable init
+        self.shared_option = kwargs.get("shared_option", False)
         super(OptionableSequence, self).__init__()
         self._options = None    # to detect better methods that are not overriden
         self.items = []
-        for comp in composants:
+        for rank, comp in enumerate(composants):
             if not isinstance(comp, Composable):
                 comp = Composable(comp)
             # merge ONLY if the composant is same class than "self"
             if isinstance(comp, self.__class__):
                 self.items.extend(comp.items)
+                #Note: get the option from the first component
+                if rank == 0:
+                    self.shared_option = comp.shared_option
             else:
                 self.items.append(comp)
         # Optionable init
@@ -357,7 +366,8 @@ class OptionableSequence(Optionable):
         for item in self.opt_items:
             opt_names = item.get_options().keys()
             for opt_name in opt_names:
-                assert not opt_name in all_opt_names, "Option '%s' present both in %s and in %s" % (opt_name, item, all_opt_names[opt_name])
+                if not self.shared_option and opt_name in all_opt_names:
+                    raise AttributeError("Option '%s' present both in %s and in %s" % (opt_name, item, all_opt_names[opt_name]))
                 all_opt_names[opt_name] = item
         name = "+".join(item.name for item in self.items)
         self.name = name
@@ -370,7 +380,7 @@ class OptionableSequence(Optionable):
         _options = OrderedDict()
         for item in self.items:
             if isinstance(item, Optionable):
-                _options.update(item._options)
+                _options.update(item.options)
         return _options
 
     def __repr__(self):
@@ -401,35 +411,41 @@ class OptionableSequence(Optionable):
     def has_option(self, opt_name):
         return any(item.has_option(opt_name) for item in self.opt_items)
 
-    def _item_from_option(self, opt_name):
+    def _items_from_option(self, opt_name):
+        not_found = True
         for item in self.opt_items:
             if item.has_option(opt_name):
-                return item
-        raise ValueError("'%s' is not an existing option" % opt_name)
+                not_found = False
+                yield item
+        if not_found:
+            raise ValueError("'%s' is not an existing option" % opt_name)
+
+    def _item_from_option(self, opt_name):
+        return next(self._items_from_option(opt_name))
 
     def option_is_hidden(self, opt_name):
         item = self._item_from_option(opt_name)
         return item.option_is_hidden(opt_name)
 
     def clear_option_value(self, opt_name):
-        item = self._item_from_option(opt_name)
-        item.clear_option_value(opt_name)
+        for item in self._items_from_option(opt_name):
+            item.clear_option_value(opt_name)
 
     def set_option_value(self, opt_name, value, parse=False):
-        item = self._item_from_option(opt_name)
-        item.set_option_value(opt_name, value, parse=parse)
+        for item in self._items_from_option(opt_name):
+            item.set_option_value(opt_name, value, parse=parse)
 
     def get_option_value(self, opt_name):
         item = self._item_from_option(opt_name)
         return item.get_option_value(opt_name)
 
     def change_option_default(self, opt_name, default_val):
-        item = self._item_from_option(opt_name)
-        item.change_option_default(opt_name, default_val)
+        for item in self._items_from_option(opt_name):
+            item.change_option_default(opt_name, default_val)
 
     def force_option_value(self, opt_name, value):
-        item = self._item_from_option(opt_name)
-        item.force_option_value(opt_name, value)
+        for item in self._items_from_option(opt_name):
+            item.force_option_value(opt_name, value)
 
     def get_option_default(self, opt_name):
         item = self._item_from_option(opt_name)
@@ -455,12 +471,6 @@ class OptionableSequence(Optionable):
         for item in self.opt_items:
             values.update(item.get_options_values(hidden=hidden))
         return values
-
-    def get_ordered_options(self, hidden=False):
-        opts = []
-        for item in self.opt_items:
-            opts += item.get_ordered_options(hidden=hidden)
-        return opts
 
     def call_item(self, item, *args, **kwargs):
         item_kwargs = {}
@@ -502,8 +512,8 @@ class Pipeline(OptionableSequence):
     >>> processing(0)
     -1
     """
-    def __init__(self, *composables):
-        super(Pipeline, self).__init__(*composables)
+    def __init__(self, *composables, **kwargs):
+        super(Pipeline, self).__init__(*composables, **kwargs)
         # create the "meta" name of the optionable pipeline, and init optionable
         name = "|".join(item.name for item in self.items)
         self.name = name

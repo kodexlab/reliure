@@ -216,7 +216,7 @@ class TestOptionableSequence(unittest.TestCase):
         opt = MyOptionable()
         opt2 = Optionable("opt2")
         opt2.add_option("filtering", Boolean(default=True, help="whether to activate a funcky filter !"))
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(AttributeError):
             OptionableSequence(opt, opt)
         comp = OptionableSequence(opt, opt2)
         self.assertTrue(comp.has_option("filtering"))
