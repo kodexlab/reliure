@@ -521,7 +521,7 @@ class Map(OptionableSequence):
     >>> item_process = Composable(lambda x: x+2) | Composable(lambda x: x if x > 3 else 0)
     >>> flux_process = Map(item_process)
     >>>
-    >>> inputs = xrange(5)
+    >>> inputs = range(5)
     >>> [e for e in flux_process(inputs)]
     [0, 0, 4, 5, 6]
 
