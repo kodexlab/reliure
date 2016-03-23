@@ -75,7 +75,8 @@ class Composable(object):
             self.name = self.__class__.__name__
         else:
             self.name = name
-        self._logger = logging.getLogger("reliure.%s" % self.name)
+        self._logger = None
+        self.init_logger()
 
     @property
     def name(self):
@@ -87,6 +88,15 @@ class Composable(object):
         if ' ' in name:
             raise ValueError("Component name should not contain space")
         self._name = name
+
+    def init_logger(self, reinit=False):
+        if self._logger is None or reinit:
+            self._logger = logging.getLogger("reliure.%s" % self.name)
+
+    @property
+    def logger(self):
+        self.init_logger()
+        return self._logger
 
     def __or__(self, other):
         if not callable(other):
@@ -479,11 +489,11 @@ class OptionableSequence(Optionable):
         if isinstance(item, Optionable):
             item.set_options_values(kwargs, strict=False, parse=False)
             item_kwargs = item.get_options_values()
-        self._logger.debug("calling %s '%s' with %s", item, item_name, item_kwargs)
+        self.logger.debug("calling %s '%s' with %s", item, item_name, item_kwargs)
         try:
             res = item(*args, **item_kwargs)
         except Exception:
-            self._logger.error("error in component '%s'" % (item.name))
+            self.logger.error("error in component '%s'" % (item.name))
             raise
         return res
 
