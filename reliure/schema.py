@@ -743,7 +743,7 @@ class VectorItem(object):
 
 
 class Doc(dict):
-    """ Cello Document object
+    """ Document object
     
     Here is an exemple of document construction from a simple text.
     First we define document's schema:
@@ -775,8 +775,6 @@ class Doc(dict):
     >>> terms_tf = [ tokens.count(k) for k in text_terms ]
     >>> terms_pos = [[i for i, tok in enumerate(tokens) if tok == k ] for k in text_terms]
 
-    .. note:: there is better way to analyse a text with Cello !
-    
     and one can store the result in the field "terms":
     
     >>> doc.terms = text_terms
