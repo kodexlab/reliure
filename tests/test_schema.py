@@ -2,9 +2,7 @@
 import unittest
 
 from reliure.types import Text, Numeric
-
-import cello
-from cello.schema import Schema, SchemaError
+from reliure.schema import Schema, SchemaError
 
 class TestFieldTypes(unittest.TestCase):
     def setUp(self):

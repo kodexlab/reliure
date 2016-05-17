@@ -1,13 +1,11 @@
 #-*- coding:utf-8 -*-
+from __future__ import unicode_literals
 import unittest
 
 from reliure.types import Numeric, Text
 from reliure.exceptions import ValidationError
 
-import cello
-from cello.exceptions import SchemaError
-from cello.schema import DocField, ValueField, VectorField, SetField, ListField
-from cello.schema import Schema, Doc
+from reliure.schema import DocField, ValueField, VectorField, SetField, ListField, Schema, Doc, SchemaError
 
 class TestDocFields(unittest.TestCase):
     """ test ot DocField subclasses
@@ -113,7 +111,7 @@ class TestDocFields(unittest.TestCase):
 
     def test_VectorField_base(self):
         # create a simple field
-        v_field = VectorField(Text(vtype=str,
+        v_field = VectorField(Text(
             attrs={
                 'tf': Numeric(default=1),
                 'positions': Numeric(multi=True),
@@ -151,7 +149,7 @@ class TestDocFields(unittest.TestCase):
 
     def test_VectorField_VectorItem(self):
         # create a simple field
-        v_field = VectorField(Text(vtype=str,
+        v_field = VectorField(Text(
             attrs={
                 'tf': Numeric(default=1),
                 'positions': Numeric(multi=True),
@@ -173,7 +171,7 @@ class TestDocFields(unittest.TestCase):
 
     def test_VectorField_VectorAttr(self):
         # create a simple field
-        v_field = VectorField(Text(vtype=str,
+        v_field = VectorField(Text(
             attrs={
                 'tf': Numeric(default=1),
                 'positions': Numeric(multi=True),
@@ -208,11 +206,10 @@ class TestDoc(unittest.TestCase):
     maxDiff = None
 
     def test_doc(self):
-        schema = Schema(titre = Text(vtype=str))
+        schema = Schema(titre = Text())
         doc = Doc(schema)
         self.assertTrue("titre" in doc.schema)
         # no equal because DocNum added
-        self.assertTrue("docnum" in doc.schema)
         self.assertNotEqual(doc.schema, schema)
         self.assertEqual(doc["schema"], doc.schema)
         # repr, weak test, just avoid Exception
@@ -244,7 +241,7 @@ class TestDoc(unittest.TestCase):
             doc.add_field("nb_pages", Numeric())
         
         # add a more complex field
-        doc.add_field("authors", Text(multi=True, uniq=True, vtype=str))
+        doc.add_field("authors", Text(multi=True, uniq=True))
         self.assertTrue("authors" in doc)
         doc.authors.add("Jule Rime")
         doc.authors.add("Jule Rime")
