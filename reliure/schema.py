@@ -397,6 +397,7 @@ class VectorField(DocField):
     [42, 20]
 
     It is also possible to delete elements from the field
+    
     >>> pprint(doc.terms.export())
     {'foo': [42, 20], 'keys': {'chat': 0, 'dog': 1}, 'tf': [12, 55]}
     >>> del doc.terms['chat']
