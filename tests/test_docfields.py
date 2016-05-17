@@ -103,7 +103,7 @@ class TestDocFields(unittest.TestCase):
         l_field[1:3] = [5,6]
         self.assertEqual(l_field, [0, 5, 6, 3, 4])
         self.assertEqual(l_field[3:5], [3, 4])
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             l_field[1:3] = [5,6,4]
         # remove element
         del l_field[1]
