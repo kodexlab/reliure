@@ -1,6 +1,8 @@
 #-*- coding:utf-8 -*-
 from __future__ import unicode_literals
+
 import unittest
+from pytest import raises
 
 from reliure.types import Numeric, Text
 from reliure.exceptions import ValidationError
@@ -17,9 +19,11 @@ class TestDocFields(unittest.TestCase):
     def test_DocField(self):
         df = DocField(Numeric())
         # check is abstract
-        self.assertRaises(NotImplementedError, df.get_value)
+        with raises(NotImplementedError):
+            df.get_value()
         # check that 
-        self.assertRaises(AssertionError, DocField, 1)
+        with raises(AssertionError):
+            df2 = DocField(1)
 
     def test_DocField_FromType(self):
         """ Test DocField.FromType factory
@@ -31,23 +35,24 @@ class TestDocFields(unittest.TestCase):
         self.assertIsInstance(DocField.FromType(Numeric(attrs={"score": Numeric()})), VectorField)
 
     def test_ValueField(self):
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             vfield = ValueField(Numeric(multi=True))
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             vfield = ValueField(Numeric(multi=True, uniq=True))
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             vfield = ValueField(Numeric(attrs={"size": Numeric()}))
         vfield = ValueField(Numeric())
-        self.assertRaises(ValidationError, vfield.set, "op")
+        with raises(ValidationError):
+            vfield.set("op")
         vfield.set(5)
         self.assertEqual(vfield.get_value(), 5)
 
     def test_SetField(self):
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             set_field = SetField(Numeric())
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             set_field = SetField(Numeric(multi=True, default={1,2,3,}))
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             set_field = SetField(Numeric(multi=True, uniq=False))
         set_field = SetField(Numeric(uniq=True, default={1,2,3,}))
         # get_value()
@@ -66,18 +71,21 @@ class TestDocFields(unittest.TestCase):
         set_field.set((4, 5, 6))
         self.assertEqual(set_field, set([4, 5, 6]))
         # test errors
-        self.assertRaises(SchemaError, set_field.set, 'boo')
-        self.assertRaises(SchemaError, set_field.set, 57)
+        with raises(SchemaError):
+            set_field.set('boo')
+        with raises(SchemaError):
+            set_field.set(57)
         # > test than the failed set didn't change values
         self.assertEqual(set_field, set([4, 5, 6]))
-        self.assertRaises(ValidationError, set_field.add, 'boo')
+        with raises(ValidationError):
+            set_field.add('boo')
 
     def test_ListField(self):
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             l_field = ListField(Numeric())
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             l_field = ListField(Numeric(uniq=True))
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             l_field = ListField(Numeric(attrs={"size": Numeric()}))
         # affectation with append
         l_field = ListField(Numeric(multi=True))
@@ -91,19 +99,22 @@ class TestDocFields(unittest.TestCase):
         l_field2.set(xrange(5))
         self.assertEqual(l_field2, list(xrange(5)))
         # affectation fail
-        self.assertRaises(SchemaError, l_field2.set, 'boo')
-        self.assertRaises(SchemaError, l_field2.set, 57)
+        with raises(SchemaError):
+            l_field2.set('boo')
+        with raises(SchemaError):
+            l_field2.set(57)
         # > test than the failed set didn't change values
         self.assertEqual(l_field2, list(xrange(5)))
         # add and append
         l_field2.add(55)
         self.assertEqual(l_field2, [0, 1, 2, 3, 4, 55])
-        self.assertRaises(ValidationError, l_field2.append, "e")
+        with raises(ValidationError):
+            l_field2.append("e")
         # slicing
         l_field[1:3] = [5,6]
         self.assertEqual(l_field, [0, 5, 6, 3, 4])
         self.assertEqual(l_field[3:5], [3, 4])
-        with self.assertRaises(ValueError):
+        with raises(ValueError):
             l_field[1:3] = [5,6,4]
         # remove element
         del l_field[1]
@@ -187,14 +198,14 @@ class TestDocFields(unittest.TestCase):
         self.assertEqual(v_field.tf[1], 500)
         self.assertListEqual(v_field.tf[0:2], [1, 500]) # getslice
         v_field.tf = [2, 3]
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             v_field.tf = [2, 3, 45, 4]
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             var = v_field.cat
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             v_field.cat = 12
         # add an atribute
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             v_field.add_attribute("tf", Numeric())
         v_field.add_attribute("score", Numeric(default=0))
         self.assertSetEqual(v_field.attribute_names(), set(['tf', 'positions', 'score']))
@@ -217,7 +228,7 @@ class TestDoc(unittest.TestCase):
         self.assertNotEqual(doc.export(), "")
         
         # try to overide the schema
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             doc.schema = schema
         
         # init with data
@@ -233,11 +244,11 @@ class TestDoc(unittest.TestCase):
         self.assertTrue("nb_pages" in doc.schema)
         doc.nb_pages = 24
         self.assertEqual(doc.nb_pages, 24)
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             doc.nb_page = 24
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             nb_page = doc.nb_page
-        with self.assertRaises(SchemaError):
+        with raises(SchemaError):
             doc.add_field("nb_pages", Numeric())
         
         # add a more complex field
