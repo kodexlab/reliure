@@ -53,7 +53,7 @@ class TestFieldTypes(unittest.TestCase):
         names1 = [name for name, fieldtype in schema.iter_fields()]
         names2 = [name for name in schema]
         assert len(names1) == 3
-        self.assertListEqual(names1, names2)
+        assert names1 == names2
 
         # remove field
         # unimplemented
