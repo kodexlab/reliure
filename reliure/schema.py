@@ -18,6 +18,7 @@ Class
 # python 2 and 3 compatibility
 from __future__ import unicode_literals
 import six
+from six import string_types
 from builtins import range
 
 from collections import OrderedDict
@@ -267,7 +268,7 @@ class SetField(DocField, set):
         return self
 
     def set(self, values):
-        if not hasattr(values, '__iter__'):
+        if not hasattr(values, '__iter__') or isinstance(values, string_types):
             raise SchemaError("Wrong value '%s' for field '%s'" % (values, self._ftype))
         # check data are valid before deleting the data
         # prevents losing data if wrong type is passed
@@ -324,7 +325,7 @@ class ListField(DocField, list):
     def set(self, values):
         """ set new values (values have to be iterable)
         """
-        if not hasattr(values, '__iter__'):
+        if not hasattr(values, '__iter__') or isinstance(values, string_types):
             raise SchemaError("Wrong value '%s' for field '%s'" % (values, self._ftype))
         # check data are valid before deleting the data
         # prevents losing data if wrong type is passed
