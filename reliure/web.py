@@ -371,7 +371,7 @@ class ReliureAPI(Blueprint):
         }
     }
     """
-    def __init__(self, name="api", url_prefix=None, **kwargs):
+    def __init__(self, name="api", url_prefix=None, expose_route=True,  **kwargs):
         """ Build the Blueprint view over a :class:`.Engine`.
     
         :param name: the name of this api (used as url prefix by default)
@@ -383,7 +383,7 @@ class ReliureAPI(Blueprint):
             url_prefix = "/%s" % name
         super(ReliureAPI, self).__init__(name, __name__, url_prefix=url_prefix, **kwargs)
         self.name = name
-        self.expose_route = True
+        self.expose_route = expose_route
         #Note: the main get "/" route exposition is binded in register method
 
         #TODO add error handler
