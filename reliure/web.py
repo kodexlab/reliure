@@ -375,6 +375,7 @@ class ReliureAPI(Blueprint):
         """ Build the Blueprint view over a :class:`.Engine`.
     
         :param name: the name of this api (used as url prefix by default)
+        :expose_route: wether / returns all api routes default True
         """
         self._logger = logging.getLogger("reliure.%s" % self.__class__.__name__)
         assert isinstance(name, six.string_types)
