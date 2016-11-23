@@ -2,7 +2,7 @@
 """:mod:`reliure`
 =================
 """
-__version__ = '15.10'
+__version__ = '16.12'
 __all__ = ['Composable', 'Optionable', 'Map']
 
 from reliure.pipeline import Composable, Optionable, Map
