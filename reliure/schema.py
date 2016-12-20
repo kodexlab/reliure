@@ -798,9 +798,7 @@ class Doc(dict):
     3
     >>> doc.terms.positions[3]
     [3, 11]
-    
-    
-    #TODO: docnum doit etre un field spécial
+
     #TODO: la valeur de docnum doit être passer en argument de __init__
     """
     
@@ -818,6 +816,11 @@ class Doc(dict):
         
         >>> from reliure.types import Text, Numeric
         >>> doc = Doc(Schema(titre=Text()), titre='Un titre')
+
+        Not that a "docnum" field is always present, i.e. it is added if not given in schema:
+        >>> doc = Doc(docnum="42")
+        >>> doc.docnum
+        '42'
         """
         dict.__init__(self)
 
@@ -825,6 +828,9 @@ class Doc(dict):
             schema = Schema()
         else:
             schema = schema.copy()
+        #Add a docnum if not already present
+        if "docnum" not in schema:
+            schema.add_field("docnum", Text())
         object.__setattr__(self, 'schema', schema)
 
         # fields value(s)
