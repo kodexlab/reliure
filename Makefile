@@ -21,11 +21,6 @@ doc: testdoc
 doc-notest: 
 	make -C ./docs html
 
-publish-doc:
-	rm -rf ./doc/_build/
-	make -C ./docs html
-	scp -r ./docs/_build/html/* 192.168.122.99:/var-hdd/www-proxteam/doc/reliure/
-
 test:
 	py.test -v ./tests --cov reliure --cov-report html
 
