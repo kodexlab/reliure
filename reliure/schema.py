@@ -753,7 +753,6 @@ class Doc(dict):
     >>> term_field = Text(attrs={'tf':Numeric(default=1), 'positions':Numeric(multi=True)})
     >>> schema = Schema(docnum=Numeric(), text=Text(), terms=term_field)
     
-    
     Now it is how one can build a document from this simple text:
     
     >>> text = \"\"\"i have seen chicken passing the street and i believed
@@ -767,7 +766,9 @@ class Doc(dict):
     'i have'
     >>> len(doc.text)
     113
-    
+    >>> doc["docnum"]
+    1
+
     Then we can analyse the text:
 
     >>> tokens = text.split(' ')
@@ -844,14 +845,16 @@ class Doc(dict):
         self[name] = docfield or DocField.FromType(ftype)
 
     def get_field(self, name):
-        """ return the :class:`DocField` field for the given name """
+        """ Returns the :class:`DocField` field for the given name
+        """
         try:
             return dict.__getitem__(self, name)
         except KeyError as err:
             raise SchemaError("'%s' is not a document field (existing attributes are: %s)" % (err, list(self)))
 
     def set_field(self, name, value, parse=False):
-        """ set field """
+        """ Set the value of a field
+        """
         # explicit getitem needed for ValueField
         try: 
             item = dict.__getitem__(self, name)
