@@ -439,7 +439,7 @@ class ReliureAPI(Blueprint):
         if self.expose_route:
             ## add the main api route
             self.add_url_rule('/', 'routes', lambda: self._routes(app), methods=["GET"])
-        super(ReliureAPI, self).register(app, options, first_registration=first_registration)
+        super(ReliureAPI, self).register(app, options) #, first_registration=first_registration)
 
 
 class RemoteApi(Blueprint):
@@ -500,7 +500,7 @@ class RemoteApi(Blueprint):
         if options:
             self.url_prefix = options.get('url_prefix', self.url_prefix)
 
-        super(RemoteApi, self).register(app, options, first_registration=first_registration)
+        super(RemoteApi, self).register(app, options)# , first_registration=first_registration)
         
     def forward(self, **kwargs):
         """ remote http call to api endpoint 
